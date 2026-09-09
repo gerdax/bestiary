@@ -26,12 +26,12 @@
             <div class="two-fields"><label>Rodzaj<select id="kind"></select></label><label>Poziom zagrożenia<select id="tier"></select></label></div>
             <label>Nazwa<input id="name" required maxlength="50" placeholder="np. Uruk z Czarnej Krainy" /></label>
             <div class="stats-inputs">
-              <label>Zajadłość<input id="fierceness" type="number" min="1" max="20" /></label>
-              <label>Wytrzymałość<input id="endurance" type="number" min="1" max="99" /></label>
-              <label id="resource-label">Nienawiść<input id="hate" type="number" min="0" max="99" /></label>
-              <label>Potęga<input id="might" type="number" min="0" max="10" /></label>
-              <label>Obrona<input id="parry" type="number" min="0" max="20" /></label>
-              <label>Pancerz<input id="armour" type="number" min="0" max="20" /></label>
+              <label><span>Zajadłość <button type="button" class="help-tooltip" aria-label="Wyjaśnienie Zajadłości" data-tooltip="Określa, jak groźnym przeciwnikiem jest dana istota. Wpływa na niektóre Obrażenia specjalne i Mroczne Atrybuty.">?</button></span><input id="fierceness" type="number" min="1" max="20" /></label>
+              <label><span>Wytrzymałość <button type="button" class="help-tooltip" aria-label="Wyjaśnienie Wytrzymałości" data-tooltip="Mierzy odporność na obrażenia i wyczerpanie walką. Gdy spadnie do zera, przeciwnik zostaje wyeliminowany z potyczki.">?</button></span><input id="endurance" type="number" min="1" max="99" /></label>
+              <label id="resource-label"><span><span id="resource-name">Nienawiść</span> <button type="button" class="help-tooltip" id="resource-help" aria-label="Wyjaśnienie Nienawiści" data-tooltip="Mierzy wolę walki i zasób do używania specjalnych zdolności. Można wydać 1 punkt, aby dodać 1k do testu; bez punktów przeciwnik ulega Wyczerpaniu.">?</button></span><input id="hate" type="number" min="0" max="99" /></label>
+              <label><span>Potęga <button type="button" class="help-tooltip" aria-label="Wyjaśnienie Potęgi" data-tooltip="Określa, ile Ran potrzeba, aby pozbawić przeciwnika życia, oraz ile ataków może wykonać w jednej rundzie.">?</button></span><input id="might" type="number" min="0" max="10" /></label>
+              <label><span>Obrona <button type="button" class="help-tooltip" aria-label="Wyjaśnienie Obrony" data-tooltip="Jej wartość dodaje się do progu Siły Bohatera, który próbuje sięgnąć tego przeciwnika podczas potyczki.">?</button></span><input id="parry" type="number" min="0" max="20" /></label>
+              <label><span>Pancerz <button type="button" class="help-tooltip" aria-label="Wyjaśnienie Pancerza" data-tooltip="Po Przełamaniu Obrony Mistrzyni Wiedzy używa tej wartości do testu Pancerza przeciwnika.">?</button></span><input id="armour" type="number" min="0" max="20" /></label>
             </div>
             <label>Biegłości bojowe<textarea id="attack" rows="2" maxlength="280" placeholder="np. Miecz 3 (3/16), Łuk 2 (3/14, Celny Atak)"></textarea></label>
             <label>Mroczne atrybuty / zdolności<textarea id="traits" rows="3" maxlength="500" placeholder="Krótka wskazówka do odgrywania lub reguła specjalna."></textarea></label>

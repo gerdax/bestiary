@@ -10,3 +10,48 @@
   display: flex;
   gap: 10px;
 }
+
+.help-tooltip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: 1px solid var(--moss);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--moss);
+  cursor: help;
+  font: 700 8px/1 Manrope, sans-serif;
+  vertical-align: middle;
+}
+
+.help-tooltip::after {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 9px);
+  left: 50%;
+  width: min(280px, 70vw);
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fffdf7;
+  content: attr(data-tooltip);
+  font: 12px/1.45 Manrope, sans-serif;
+  letter-spacing: normal;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  text-transform: none;
+  transform: translateX(-50%) translateY(-3px);
+  transition: opacity .15s ease, transform .15s ease;
+  visibility: hidden;
+}
+
+.help-tooltip.is-open::after,
+.help-tooltip.is-hovered::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  visibility: visible;
+}
