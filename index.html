@@ -20,7 +20,7 @@
       </nav>
 
       <section id="generator" class="page active">
-        <div class="section-heading"><div><p class="eyebrow">NOWY STATBLOCK</p><h2>Stwórz przeciwnika</h2></div><button class="text-button" id="randomize">↻ Wylosuj wszystko</button></div>
+        <div class="section-heading"><div><h2>Stwórz przeciwnika</h2></div><button class="text-button" id="randomize">↻ Wylosuj wszystko</button></div>
         <div class="generator-grid">
           <form class="paper form-card" id="enemy-form">
             <div class="two-fields"><label>Rodzaj<select id="kind"></select></label><label>Poziom zagrożenia<select id="tier"></select></label></div>
@@ -41,13 +41,13 @@
       </section>
 
       <section id="battle" class="page">
-        <div class="section-heading"><div><p class="eyebrow">SCENA W TOKU</p><h2>Aktywna walka</h2></div><button class="text-button danger" id="clear-battle">Wyczyść starcie</button></div>
+        <div class="section-heading"><div><h2>Aktywna walka</h2></div><button class="text-button danger" id="clear-battle">Wyczyść starcie</button></div>
         <div id="battle-list" class="battle-list"></div>
         <div id="battle-empty" class="empty-state"><span>⚔</span><h3>Jeszcze nikt nie stanął do walki.</h3><p>Dodaj przeciwnika z generatora albo biblioteki.</p></div>
       </section>
 
       <section id="library" class="page">
-        <div class="section-heading"><div><p class="eyebrow">STATBLOKI I ZAPISKI</p><h2>Biblioteka przeciwników</h2></div><button class="text-button" id="export-data">↓ Eksportuj kopię</button></div>
+        <div class="section-heading"><div><h2>Biblioteka przeciwników</h2></div><button class="text-button" id="export-data">↓ Eksportuj kopię</button></div>
         <div class="library-controls"><input id="library-search" type="search" placeholder="Szukaj przeciwnika…" /><div id="category-filters" class="filters"></div></div>
         <div id="library-list" class="library-grid"></div>
         <div id="library-empty" class="empty-state"><span>♜</span><h3>Biblioteka jest pusta.</h3><p>Zapisz stworzonego przeciwnika, aby wykorzystać go później.</p></div>

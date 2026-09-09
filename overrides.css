@@ -21,6 +21,15 @@
   flex-wrap: nowrap;
 }
 
+.battle-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.battle-card .defeated {
+  margin-top: auto;
+}
+
 @media (max-width: 260px) {
   .card-actions {
     flex-wrap: wrap;
