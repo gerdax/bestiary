@@ -1,0 +1,7 @@
+.generator-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.traits-display {
+  white-space: pre-line;
+}
