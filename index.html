@@ -47,7 +47,8 @@
       </section>
 
       <section id="library" class="page">
-        <div class="section-heading"><div><h2>Biblioteka przeciwników</h2></div><button class="text-button" id="export-data">↓ Eksportuj kopię</button></div>
+        <div class="section-heading"><div><h2>Biblioteka przeciwników</h2></div><div class="library-transfer"><button class="text-button" id="import-data">↑ Importuj bibliotekę</button><button class="text-button" id="export-data">↓ Eksportuj kopię</button></div></div>
+        <input id="import-file" type="file" accept="application/json,.json" hidden />
         <div class="library-controls"><input id="library-search" type="search" placeholder="Szukaj przeciwnika…" /><div id="category-filters" class="filters"></div></div>
         <div id="library-list" class="library-grid"></div>
         <div id="library-empty" class="empty-state"><span>♜</span><h3>Biblioteka jest pusta.</h3><p>Zapisz stworzonego przeciwnika, aby wykorzystać go później.</p></div>
