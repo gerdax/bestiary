@@ -11,6 +11,23 @@
   gap: 10px;
 }
 
+.card-top > div:first-child {
+  min-width: 0;
+  padding-right: 12px;
+}
+
+.card-actions {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 260px) {
+  .card-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 .help-tooltip {
   position: relative;
   display: inline-grid;
