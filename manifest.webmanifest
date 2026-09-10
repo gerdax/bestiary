@@ -1,0 +1,19 @@
+{
+  "name": "Bestiariusz Śródziemia",
+  "short_name": "Bestiariusz",
+  "description": "Generator przeciwników i narzędzie do prowadzenia walki w The One Ring RPG.",
+  "lang": "pl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f0e8",
+  "theme_color": "#c4493e",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
