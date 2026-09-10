@@ -34,7 +34,7 @@
 
 body {
   background-color: var(--cream);
-  background-image: radial-gradient(ellipse at 15% 5%, rgb(255 255 255 / .8), transparent 35%), radial-gradient(ellipse at 78% 36%, rgb(177 143 109 / .1), transparent 42%), repeating-linear-gradient(0deg, rgb(100 70 45 / .025) 0 1px, transparent 1px 5px);
+  background-image: repeating-linear-gradient(0deg, rgb(100 70 45 / .025) 0 1px, transparent 1px 5px);
   font-family: Georgia, "Times New Roman", serif;
 }
 
@@ -42,26 +42,22 @@ body {
   max-width: 1180px;
   min-height: 100vh;
   padding-top: 32px;
+  background: var(--cream);
+}
+
+#generator,
+#battle,
+#library {
+  background: transparent;
 }
 
 .tabs {
   position: relative;
   gap: 10px;
-  padding: 18px 0 24px;
-  border-top: 2px solid var(--clay);
-  border-bottom: 1px solid var(--line);
+  padding: 17px 0 24px;
+
 }
 
-.tabs::before,
-.tabs::after {
-  position: absolute;
-  top: -10px;
-  color: var(--clay);
-  font: 22px/1 Georgia, serif;
-}
-
-.tabs::before { content: "✧"; left: 0; }
-.tabs::after { content: "✧"; right: 0; }
 
 .tab {
   color: var(--ink);
@@ -84,7 +80,7 @@ body {
 
 .section-heading {
   align-items: center;
-  margin: 28px 0 20px;
+  margin: 0px 0 20px;
   padding-top: 18px;
   border-top: 2px solid var(--clay);
 }
@@ -114,7 +110,7 @@ body {
 .form-card,
 .battle-card,
 .library-card {
-  background: rgb(250 248 244 / .88);
+  background: #faf8f4;
 }
 
 label {
@@ -176,6 +172,7 @@ textarea {
 }
 
 .combat-stats {
+  grid-template-columns: 1.15fr 1fr;
   gap: 0;
   margin: 20px 0 18px;
 }
@@ -184,6 +181,7 @@ textarea {
 .hate-meter {
   background: #f0eeea;
   border-right: 1px solid #d9c9bd;
+  min-width: 0;
   padding: 15px;
 }
 
@@ -197,6 +195,7 @@ textarea {
 .meter strong {
   color: var(--ink);
   font-size: 32px;
+  white-space: nowrap;
 }
 
 .adjusters button {
