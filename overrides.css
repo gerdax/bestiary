@@ -20,6 +20,280 @@
   gap: 16px;
 }
 
+/* Styl inspirowany stronami bestiariusza z podręcznika. */
+:root {
+  --ink: #5d4b3b;
+  --moss: #705a45;
+  --cream: #f4f0e8;
+  --paper: #fffdf9;
+  --clay: #c4493e;
+  --gold: #b48a61;
+  --line: #c8a99a;
+  --muted: #76695d;
+}
+
+body {
+  background-color: var(--cream);
+  background-image: radial-gradient(ellipse at 15% 5%, rgb(255 255 255 / .8), transparent 35%), radial-gradient(ellipse at 78% 36%, rgb(177 143 109 / .1), transparent 42%), repeating-linear-gradient(0deg, rgb(100 70 45 / .025) 0 1px, transparent 1px 5px);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.shell {
+  max-width: 1180px;
+  min-height: 100vh;
+  padding-top: 32px;
+}
+
+.tabs {
+  position: relative;
+  gap: 10px;
+  padding: 18px 0 24px;
+  border-top: 2px solid var(--clay);
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs::before,
+.tabs::after {
+  position: absolute;
+  top: -10px;
+  color: var(--clay);
+  font: 22px/1 Georgia, serif;
+}
+
+.tabs::before { content: "✧"; left: 0; }
+.tabs::after { content: "✧"; right: 0; }
+
+.tab {
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  letter-spacing: .01em;
+  padding: 9px 15px;
+}
+
+.tab.active {
+  background: var(--clay);
+  border-radius: 0;
+  color: var(--paper);
+}
+
+.tab span {
+  background: rgb(255 255 255 / .22);
+  font-family: "DM Mono", monospace;
+}
+
+.section-heading {
+  align-items: center;
+  margin: 28px 0 20px;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+
+.section-heading h2 {
+  color: var(--clay);
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(31px, 4vw, 42px);
+  font-style: italic;
+  letter-spacing: -.045em;
+}
+
+.text-button {
+  color: var(--clay);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+}
+
+.paper,
+.battle-card,
+.library-card {
+  border: 0;
+  border-top: 2px solid var(--clay);
+  box-shadow: 0 4px 18px rgb(93 75 59 / .06);
+}
+
+.form-card,
+.battle-card,
+.library-card {
+  background: rgb(250 248 244 / .88);
+}
+
+label {
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  letter-spacing: .02em;
+}
+
+input,
+select,
+textarea {
+  border-color: #cdb6a4;
+  border-radius: 0;
+  background: rgb(255 253 249 / .72);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.primary,
+.secondary,
+.defeated {
+  border-radius: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+}
+
+.primary { background: var(--clay); }
+.secondary { background: #e9e1d7; }
+
+.battle-card {
+  border-top-width: 4px;
+  padding: 24px;
+}
+
+.battle-card.defeated-card { border-top-color: #967766; }
+
+.enemy-tier,
+.attack-display::before,
+.traits-display::before {
+  color: var(--clay);
+}
+
+.enemy-name {
+  color: var(--ink);
+  font-family: Fraunces, Georgia, serif;
+  font-size: 30px;
+}
+
+.enemy-kind,
+.detail,
+.library-card p { color: var(--muted); }
+
+.icon-button {
+  border-color: var(--line);
+  border-radius: 0;
+  color: var(--clay);
+  font-family: Georgia, serif;
+}
+
+.combat-stats {
+  gap: 0;
+  margin: 20px 0 18px;
+}
+
+.meter,
+.hate-meter {
+  background: #f0eeea;
+  border-right: 1px solid #d9c9bd;
+  padding: 15px;
+}
+
+.meter:last-child { border-right: 0; }
+
+.meter p {
+  color: var(--clay);
+  font-weight: 700;
+}
+
+.meter strong {
+  color: var(--ink);
+  font-size: 32px;
+}
+
+.adjusters button {
+  border-color: #d4c3b6;
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.facts {
+  justify-content: space-around;
+  gap: 18px 10px;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.facts span {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 0;
+  background: none;
+  color: var(--clay);
+  font: 700 10px/1 "DM Mono", monospace;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.facts b {
+  position: relative;
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  color: var(--clay);
+  font: 700 18px/1 Fraunces, Georgia, serif;
+}
+
+.facts b::before {
+  position: absolute;
+  inset: 2px;
+  border: 1px solid #e26a5e;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.detail {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.attack-display,
+.traits-display {
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.traits-display em { color: var(--ink); }
+
+.defeated {
+  border-color: #d9aaa0;
+  color: var(--clay);
+}
+
+.defeated-card .defeated { background: #967766; }
+
+.library-card h3 {
+  color: var(--clay);
+  font-family: Fraunces, Georgia, serif;
+}
+
+.library-stats { color: var(--clay); }
+
+.library-actions button {
+  border-radius: 0;
+  background: #e8e0d7;
+  font-family: Georgia, serif;
+}
+
+.filters button {
+  border-color: var(--line);
+  border-radius: 0;
+  font-family: Georgia, serif;
+}
+
+.filters button.active {
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+@media (max-width: 680px) {
+  .library-transfer { gap: 10px; }
+  .text-button { font-size: 13px; }
+  .facts { justify-content: flex-start; }
+}
+
 .card-top > div:first-child {
   min-width: 0;
   padding-right: 12px;
