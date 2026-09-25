@@ -1,0 +1,55 @@
+#map { color: var(--ink); }
+#map .section-heading { gap: 24px; }
+#map .section-heading .eyebrow { margin: 0 0 5px; }
+.map-heading-note { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 3px; text-align: right; }
+.map-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; padding: 16px; margin-bottom: 14px; border-top: 2px solid var(--clay); }
+.map-toolbar label { min-width: 140px; flex: 1 1 140px; font-size: 12px; }
+.map-toolbar select { padding: 9px 10px; }
+.map-toolbar .primary { min-height: 40px; background: var(--clay); white-space: nowrap; }
+.map-zoom-controls { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.map-zoom-controls button { min-height: 40px; min-width: 38px; border: 1px solid var(--line); background: #f7f2e9; color: var(--ink); cursor: pointer; font: 700 17px Georgia, serif; }
+.map-zoom-controls #map-fit { padding: 0 10px; font-size: 13px; }
+.map-zoom-controls output { width: 50px; text-align: center; color: var(--muted); font: 12px 'DM Mono', monospace; }
+.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 238px; gap: 14px; align-items: stretch; }
+.map-viewport { position: relative; min-width: 0; height: min(63vw, 600px); min-height: 400px; overflow: hidden; border: 8px solid #59483b; background: #776d5b; box-shadow: inset 0 0 0 3px #c1a47d, 0 8px 22px rgb(67 49 21 / .12); cursor: grab; touch-action: none; }
+.map-viewport:active { cursor: grabbing; }
+.map-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; box-shadow: 0 0 35px rgb(27 26 18 / .3); }
+#map-terrain, #map-tokens { position: absolute; inset: 0; width: 100%; height: 100%; }
+#map-tokens { pointer-events: none; }
+.map-token { position: absolute; display: grid; justify-items: center; gap: 4px; transform: translate(-50%, -50%); width: 122px; padding: 0; border: 0; background: none; color: #fff9e9; cursor: grab; pointer-events: auto; touch-action: none; }
+.map-token:active { cursor: grabbing; }
+.map-token-symbol { position: relative; display: grid; place-items: center; width: 43px; height: 43px; border: 3px solid #f4e9cf; border-radius: 50%; background: #356149; box-shadow: 0 2px 7px #1d2119a6, inset 0 0 0 2px #294735; font: 24px Georgia, serif; }
+.enemy-token .map-token-symbol { background: #a6473b; box-shadow: 0 2px 7px #1d2119a6, inset 0 0 0 2px #703b32; font-size: 19px; }
+.map-token-label { max-width: 122px; overflow: hidden; padding: 3px 7px; background: rgb(44 36 29 / .86); border: 1px solid rgb(243 226 194 / .5); color: #fff7e7; font: 600 12px Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
+.map-token.is-selected .map-token-symbol { outline: 3px solid #edc379; outline-offset: 2px; }
+.map-token.is-defeated { opacity: .53; }
+.map-token.is-defeated .map-token-symbol { filter: grayscale(1); }
+.map-token.is-defeated .map-token-symbol::after { content: '×'; position: absolute; color: white; font: 36px Georgia, serif; text-shadow: 0 1px 3px #3a2720; }
+.map-token:focus-visible .map-token-symbol { outline: 4px solid #edc379; outline-offset: 3px; }
+.map-blank { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px; color: #f2e2c3; text-align: center; background: radial-gradient(circle at 50% 42%, #897b65, #5a4d3e); }
+.map-blank[hidden], .map-stage[hidden] { display: none; }
+.map-blank span { font-size: 42px; color: #e0bd80; }
+.map-blank strong { margin-top: 7px; font: italic 29px Fraunces, Georgia, serif; }
+.map-blank p { max-width: 280px; font-size: 13px; line-height: 1.55; }
+.map-panel { min-width: 0; padding: 20px 18px; border-top: 4px solid var(--clay); background: #faf8f4; }
+.map-panel .eyebrow { margin: 0 0 10px; color: var(--clay); }
+.map-panel h3 { overflow-wrap: anywhere; margin: 0 0 18px; font-size: 24px; line-height: 1.1; }
+.map-panel-help { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.map-error { padding: 10px 14px; border-left: 3px solid var(--clay); background: #f5e2dc; color: #853c32; font-size: 13px; }
+.map-resources { display: grid; gap: 12px; margin: 21px 0; }
+.map-resource { padding: 10px; background: #eee9df; }
+.map-resource > span { color: var(--clay); font: 700 10px 'DM Mono', monospace; letter-spacing: .04em; text-transform: uppercase; }
+.map-resource-controls { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 7px; }
+.map-resource-controls strong { white-space: nowrap; font: 600 21px Fraunces, Georgia, serif; }
+.map-resource-controls button { width: 29px; height: 29px; border: 1px solid var(--line); background: #fffdf8; color: var(--ink); cursor: pointer; font-size: 18px; }
+.map-panel-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 17px; }
+.map-panel-facts div { display: grid; gap: 3px; padding: 9px; border-top: 1px solid var(--line); }
+.map-panel-facts span { color: var(--clay); font: 700 10px 'DM Mono', monospace; text-transform: uppercase; }
+.map-panel-facts strong { font: 600 18px Fraunces, Georgia, serif; }
+.map-panel-detail { margin: 9px 0; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-line; }
+.map-panel-detail b { color: var(--ink); }
+.map-panel-action, .map-panel-remove { display: block; width: 100%; margin-top: 9px; padding: 9px; border: 1px solid #c9a897; background: transparent; color: var(--clay); cursor: pointer; font: 600 13px Georgia, serif; }
+.map-panel-remove { border-color: transparent; color: var(--muted); text-decoration: underline; }
+.map-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+@media (max-width: 760px) { .map-layout { grid-template-columns: 1fr; } .map-viewport { min-height: 360px; height: min(70vw, 510px); } .map-panel { min-height: 130px; } .map-toolbar { align-items: end; } .map-zoom-controls { margin-left: 0; } .map-heading-note { display: none; } }
+@media (max-width: 480px) { .map-toolbar label { min-width: 105px; flex-basis: 105px; } .map-toolbar .primary { flex: 1 1 100%; } .map-zoom-controls { width: 100%; justify-content: end; } }

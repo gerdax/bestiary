@@ -384,3 +384,33 @@ textarea {
   transform: translateX(-50%) translateY(0);
   visibility: visible;
 }
+
+.tabs { flex-wrap: wrap; }
+.backup-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+#hero-battle-list:not(:empty) { margin-bottom: 16px; }
+.storage-warning { padding: 16px; border: 2px solid var(--clay); }
+@media(max-width: 680px) { .form-actions, .form-actions .action-buttons, .library-transfer { flex-wrap: wrap; } .battle-list, .library-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Native inputs must be allowed to shrink inside narrow grid tracks. */
+.two-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-inputs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+label, input, select, textarea { min-width: 0; }
+@media (max-width: 680px) {
+  .stats-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.help-tooltip::after { display: none; }
+.help-tooltip.is-open::after,
+.help-tooltip.is-hovered::after { display: block; }
+@media (max-width: 680px) {
+  .help-tooltip::after {
+    position: fixed;
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    width: calc(100vw - 32px);
+    transform: none;
+  }
+  .help-tooltip.is-open::after,
+  .help-tooltip.is-hovered::after { transform: none; }
+}
+.heroes-layout[hidden] { display: none; }
