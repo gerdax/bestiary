@@ -9,7 +9,7 @@ test('terrain generation is deterministic for a seed and changes with a new seed
 });
 
 test('all scenes and sizes produce bounded JSON terrain records', () => {
-  const dimensions = { small: [900, 600], medium: [1200, 800], large: [1600, 1000] };
+  const dimensions = { small: [900, 900], medium: [1200, 1200], large: [1600, 1600] };
   for (const scene of ['forest', 'clearing', 'ruins', 'cave']) {
     for (const [size, [width, height]] of Object.entries(dimensions)) {
       const map = generateTerrain(scene, size, 'test');

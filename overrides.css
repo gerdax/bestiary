@@ -414,3 +414,6 @@ label, input, select, textarea { min-width: 0; }
   .help-tooltip.is-hovered::after { transform: none; }
 }
 .heroes-layout[hidden] { display: none; }
+
+/* Temporarily disabled encounter-card view; the map is the active encounter UI. */
+.tabs .tab[hidden], #battle[hidden] { display: none; }

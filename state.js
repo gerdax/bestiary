@@ -12,7 +12,11 @@
   const KEY = "one-ring-state";
   const CATEGORIES = { Ork: "Orkowie", Goblin: "Orkowie", Bestia: "Wilki i bestie", Upiór: "Upiory", Człowiek: "Źli ludzie" };
   const TERRAIN_KINDS = new Set(["tree", "shrub", "log", "boulder", "grass", "wall", "rubble", "pillar", "pool", "crystal", "stalagmite"]);
-  const HERO_FIELDS = ["name", "culture", "strength", "heart", "wits", "strengthTN", "heartTN", "witsTN", "endurance", "maxEndurance", "hope", "maxHope", "shadow", "load", "fatigue", "parry", "armour", "weapons", "proficiencies", "stance", "conditions", "notes"];
+  const HERO_STRINGS = ["name", "culture", "weapons", "proficiencies", "stance", "conditions", "notes", "age", "treasure", "calling", "culturalBlessing", "distinctiveFeatures", "flaws", "patron", "shadowPath", "injury", "rewards", "virtues", "equipment", "standardOfLiving", "armourName", "helmName", "shieldName"];
+  const HERO_NUMBERS = ["strength", "heart", "wits", "strengthTN", "heartTN", "witsTN", "endurance", "maxEndurance", "hope", "maxHope", "shadow", "load", "fatigue", "parry", "armour", "shadowScars", "valour", "wisdom", "adventurePoints", "skillPoints", "fellowship", "helmProtection", "armourLoad", "helmLoad", "shieldParry", "shieldLoad"];
+  const HERO_BOOLEANS = ["weary", "miserable", "wounded"];
+  const HERO_SKILLS = ["Awareness", "Song", "Hunting", "Awe", "Craft", "Athletics", "Insight", "Courtesy", "Healing", "Enhearten", "Battle", "Travel", "Scan", "Riddle", "Explore", "Persuade", "Lore", "Stealth"];
+  const HERO_COMBAT = ["combatBows", "combatSwords", "combatAxes", "combatSpears"];
   const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
   const copy = value => JSON.parse(JSON.stringify(value));
   const id = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2));
@@ -37,11 +41,22 @@
   function hero(raw) {
     if (!object(raw) || typeof raw.name !== "string" || !raw.name.trim()) throw new Error("Bohater musi mieć imię.");
     const result = { id: typeof raw.id === "string" && raw.id ? raw.id : id() };
-    HERO_FIELDS.forEach(field => { result[field] = raw[field] == null ? (field === "stance" ? "Wyważona" : (field === "conditions" || field === "notes" || field === "name" || field === "culture" || field === "weapons" || field === "proficiencies" ? "" : 0)) : raw[field]; });
-    ["strength", "heart", "wits", "strengthTN", "heartTN", "witsTN", "endurance", "maxEndurance", "hope", "maxHope", "shadow", "load", "fatigue", "parry", "armour"].forEach(field => result[field] = Math.max(0, number(result[field], 0)));
+    HERO_STRINGS.forEach(field => { result[field] = raw[field] == null ? (field === "stance" ? "Wyważona" : "") : String(raw[field]); });
+    HERO_NUMBERS.forEach(field => { result[field] = Math.max(0, number(raw[field], 0)); });
+    HERO_BOOLEANS.forEach(field => { result[field] = !!raw[field]; });
+    HERO_SKILLS.forEach(name => {
+      result["skill" + name] = clamp(Math.trunc(number(raw["skill" + name], 0)), 0, 6);
+      result["skill" + name + "Favoured"] = !!raw["skill" + name + "Favoured"];
+    });
+    HERO_COMBAT.forEach(field => { result[field] = clamp(Math.trunc(number(raw[field], 0)), 0, 6); });
+    for (let index = 0; index < 4; index++) {
+      ["Name", "Damage", "Injury", "Load", "Notes"].forEach(suffix => {
+        const field = "weapon" + index + suffix;
+        result[field] = raw[field] == null ? "" : String(raw[field]);
+      });
+    }
     result.endurance = clamp(result.endurance, 0, result.maxEndurance);
     result.hope = clamp(result.hope, 0, result.maxHope);
-    ["name", "culture", "weapons", "proficiencies", "stance", "conditions", "notes"].forEach(field => result[field] = String(result[field]));
     result.defeated = !!raw.defeated;
     return result;
   }
@@ -134,6 +149,7 @@
       subscribe(fn) { if (typeof fn !== "function") throw new TypeError("Listener must be a function"); listeners.push(fn); return () => { listeners = listeners.filter(x => x !== fn); }; },
       addEnemy(raw) { return mutate(() => { const e = enemy(raw, true); e.id = id(); e.endurance = e.maxEndurance; e.hate = e.maxHate; e.defeated = false; state.battle.push(e); return copy(e); }); },
       removeParticipant(pid) { return mutate(() => { const before = state.battle.length + state.heroParticipants.length; state.battle = state.battle.filter(x => x.id !== pid); state.heroParticipants = state.heroParticipants.filter(x => x.id !== pid); return before !== state.battle.length + state.heroParticipants.length; }); },
+      clearEncounter() { return mutate(() => { state.battle = []; state.heroParticipants = []; state.map = null; }); },
       clearBattle() { return mutate(() => { state.battle = []; state.heroParticipants = []; }); },
       toggleDefeated(pid) { return mutate(() => { const e = state.battle.find(x => x.id === pid); if (e) e.defeated = !e.defeated; else { const p = state.heroParticipants.find(x => x.id === pid), h = p && state.heroes.find(x => x.id === p.heroId); if (h) h.defeated = !h.defeated; } }); },
       adjustResource(pid, field, delta) { return mutate(() => { const e = state.battle.find(x => x.id === pid); const p = state.heroParticipants.find(x => x.id === pid); const target = e || (p && state.heroes.find(x => x.id === p.heroId)); if (!target) return; const maxima = { endurance: "maxEndurance", hate: "maxHate", hope: "maxHope" }; if (!(field in maxima) || !Number.isFinite(Number(delta)) || !(field in target)) return; target[field] = clamp(number(target[field], 0) + Number(delta), 0, number(target[maxima[field]], 0)); }); },

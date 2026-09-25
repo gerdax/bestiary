@@ -37,24 +37,32 @@ async function main() {
   await page.locator('#hero-editor input[name="culture"]').dispatchEvent('change');
   await page.locator('#hero-editor [data-hero-action="battle"]').click();
   assert.equal(await page.locator('#hero-battle-list .hero-battle-card').count(), 1);
-  assert.equal(await page.locator('#hero-editor [data-hero-action="battle"]').isDisabled(), true);
+  assert.equal(await page.locator('#hero-editor [data-hero-action="battle"]').textContent(), 'Usuń z potyczki');
+  assert.equal(await page.locator('[data-tab="battle"]').isVisible(), false);
+  assert.equal(await page.locator('[data-tab="battle"]').isDisabled(), true);
 
-  // Add, clone and defeat an enemy through the generator and battle UI.
+  // Add the same enemy twice through the generator; the map is the encounter UI.
   await page.locator('[data-tab="generator"]').click();
   await page.locator('#name').fill('Smoke Uruk');
   await page.locator('#enemy-form button[data-action="battle"]').click();
-  const enemy = page.locator('#battle-list .battle-card').filter({ hasText: 'Smoke Uruk' });
-  await enemy.waitFor();
-  await enemy.locator('button.clone').click();
-  assert.equal(await page.locator('#battle-list .battle-card').count(), 2);
-  await enemy.first().locator('button.defeated').click();
-  assert.equal(await enemy.first().locator('button.defeated').textContent(), 'Przywróć do walki');
+  assert.equal(await page.locator('#map').evaluate(node => node.classList.contains('active')), true);
+  await page.locator('[data-tab="generator"]').click();
+  await page.locator('#enemy-form button[data-action="battle"]').click();
+  assert.equal(await page.locator('#map').evaluate(node => node.classList.contains('active')), true);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')).battle.length), 2);
 
-  // Generate terrain, select a token and confirm panel resources mirror battle state.
-  await page.locator('[data-tab="map"]').click();
+  // Generate terrain, then adjust and defeat an enemy through its map panel.
   await page.locator('#map-generate').click();
-  await page.locator('.map-token').first().click();
-  assert.ok(await page.locator('#map-panel').locator('button').count() >= 1);
+  assert.equal(await page.locator('.enemy-token').count(), 2);
+  const enemyToken = page.locator('.enemy-token').first();
+  const enemyId = await enemyToken.getAttribute('data-id');
+  await enemyToken.click();
+  const enemyEndurance = await page.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).battle.find(item => item.id === id).endurance, enemyId);
+  await page.locator('#map-panel .map-resource[data-field="endurance"] button').first().click();
+  assert.equal(await page.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).battle.find(item => item.id === id).endurance, enemyId), enemyEndurance - 1);
+  await page.locator('#map-panel .map-panel-action').click();
+  assert.equal(await page.locator(`.enemy-token[data-id="${enemyId}"]`).evaluate(node => node.classList.contains('is-defeated')), true);
+  assert.equal(await page.locator('#map-panel .map-panel-action').textContent(), 'Przywróć do walki');
   const before = await page.locator('#map-stage').getAttribute('style');
   await page.locator('#map-zoom-in').click();
   assert.notEqual(await page.locator('#map-stage').getAttribute('style'), before);
@@ -80,27 +88,22 @@ async function main() {
   await page.reload({ waitUntil: 'networkidle' });
   assert.deepEqual(await page.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).map.positions[id], tokenId), posAfter);
 
-  // Map controls must act on the same participant state as battle and sheets.
-  await page.locator('[data-tab="heroes"]').click();
-  await page.locator('[data-tab="battle"]').click();
-  const heroBattle = page.locator('#hero-battle-list .hero-battle-card').first();
-  await heroBattle.locator('button[data-hero-resource="hope"][data-change="-1"]').click();
-  assert.match(await heroBattle.locator('.meter').nth(1).locator('strong').textContent(), /10\/13/);
+  // Map controls update the same hero sheet after reload.
   await page.locator('[data-tab="map"]').click();
   const heroToken = page.locator('.hero-token').first();
   await heroToken.click();
-  assert.match(await page.locator('#map-panel').textContent(), /Nadzieja−10 \/ 13/);
-  const panelBefore = await page.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).heroes[0].hope, tokenId);
-  await page.locator('#map-panel .map-resource').filter({ hasText: 'Nadzieja' }).locator('button').first().click();
+  assert.match(await page.locator('#map-panel .map-resource[data-field="hope"]').textContent(), /11 \/ 13/);
+  const panelBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')).heroes[0].hope);
+  await page.locator('#map-panel .map-resource[data-field="hope"] button').first().click();
   const heroStateAfterPanel = await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')).heroes[0].hope);
   assert.equal(heroStateAfterPanel, panelBefore - 1);
-  await page.locator('[data-tab="battle"]').click();
-  const activeHeroBattle = page.locator('#hero-battle-list .hero-battle-card').first();
-  await activeHeroBattle.locator('button[data-hero-action="defeated"]').click();
+  await page.locator('[data-tab="heroes"]').click();
+  assert.equal(await page.locator('#hero-editor input[name="hope"]').inputValue(), String(heroStateAfterPanel));
   await page.locator('[data-tab="map"]').click();
+  await page.locator('#map-panel .map-panel-action').click();
   assert.equal(await page.locator('.hero-token').first().evaluate(node => node.classList.contains('is-defeated')), true);
 
-  // Regeneration clears placements while retaining resources; clear combat retains hero sheets and map.
+  // Regeneration clears placements while retaining resources.
   const resourceBeforeRegen = await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')).battle[0].hate);
   await page.locator('#map-generate').click();
   const afterRegen = await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')));
@@ -116,11 +119,15 @@ async function main() {
   const invalidPath = path.join(screenshotDir, 'one-ring-smoke-invalid.json');
   fs.writeFileSync(invalidPath, JSON.stringify({ version: 2, library: [], battle: [], heroes: [], heroParticipants: [], map: { invalid: true } }));
   await page.reload({ waitUntil: 'networkidle' });
-  await page.locator('[data-tab="battle"]').click();
-  await page.locator('#clear-battle').click();
+  await page.locator('[data-tab="map"]').click();
+  await page.locator('#map-clear').click();
   const afterClear = await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')));
   assert.equal(afterClear.heroes.length, 1);
-  assert.ok(afterClear.map);
+  assert.equal(afterClear.library.length, expected.library.length);
+  assert.equal(afterClear.battle.length, 0);
+  assert.equal(afterClear.heroParticipants.length, 0);
+  assert.equal(afterClear.map, null);
+  assert.equal(await page.locator('.map-token').count(), 0);
   await page.locator('#restore-backup').click();
   await page.locator('#backup-file').setInputFiles(validPath);
   await page.waitForFunction(expected => JSON.stringify(JSON.parse(localStorage.getItem('one-ring-state'))) === expected, JSON.stringify(expected));
@@ -179,7 +186,7 @@ async function main() {
   await page.locator('[data-tab="heroes"]').click();
   await page.screenshot({ path: path.join(screenshotDir, 'one-ring-heroes.png'), fullPage: true });
   await browser.close();
-  console.log('Browser smoke passed: hero, battle, map, backup, migration, offline, mobile, no page errors.');
+  console.log('Browser smoke passed: hero, map encounter, clear, backup, migration, offline, mobile, no page errors.');
 }
 
 main().catch(async error => { console.error(error); if (browser) await browser.close().catch(() => {}); process.exitCode = 1; });

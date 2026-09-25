@@ -1,9 +1,8 @@
 #heroes { background: transparent; }
-.hero-heading p { margin: 4px 0 0; color: var(--muted); }
-.heroes-layout { display: grid; gap: 14px; align-items: start; min-width: 0; }
-.hero-list { display: flex; gap: 8px; padding: 2px 0 6px; overflow-x: auto; max-width: 100%; }
-.hero-list-card { flex: 0 0 auto; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 10px 15px; border: 1px solid var(--line); border-radius: 0; background: #faf8f4; color: var(--ink); font-family: Fraunces, Georgia, serif; font-size: 16px; cursor: pointer; }
-.hero-list-card.is-editing, .hero-list-card[aria-selected="true"] { border-color: var(--clay); background: var(--clay); color: var(--paper); }
+.heroes-layout { display: grid; gap: 0; align-items: start; min-width: 0; }
+.hero-list { display: flex; gap: 4px; padding: 4px 4px 0; margin-bottom: -1px; position: relative; z-index: 1; align-items: end; overflow-x: auto; max-width: 100%; }
+.hero-list-card { flex: 0 0 auto; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 10px 15px; border: 1px solid var(--line); border-radius: 8px 8px 0 0; background: #eee7dc; color: var(--ink); font-family: Fraunces, Georgia, serif; font-size: 16px; cursor: pointer; }
+.hero-list-card.is-editing, .hero-list-card[aria-selected="true"] { border-color: #ae4c3d; border-bottom-color: #fffdf8; background: #fffdf8; color: #ae4c3d; border-top-width: 3px; padding-top: 14px; font-weight: 700; }
 .hero-list-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .hero-empty { padding: 22px; color: var(--muted); text-align: center; border: 1px dashed var(--line); }
 .hero-editor { display: grid; gap: 16px; padding: 24px; }
@@ -20,3 +19,109 @@
 .hero-error { color: var(--clay); }
 .hero-create-status { margin-left: 12px; color: var(--clay); font-size: 13px; }
 @media (max-width: 760px) { .hero-editor { padding: 18px; } .hero-editor-top { flex-wrap: wrap; } .hero-editor-actions { order: 3; width: 100%; margin-left: 0; } .hero-editor-footer { align-items: start; flex-direction: column; } }
+
+/* Character sheet: reading order follows the printed sheet at every width. */
+.hero-editor { --sheet-red: #ae4c3d; padding: 26px; gap: 24px; background: #fffdf8; border-top: 1px solid var(--sheet-red); }
+.hero-editor h3 { color: var(--sheet-red); font-size: 21px; font-weight: 600; letter-spacing: .04em; }
+.hero-editor label { font-size: 10px; letter-spacing: .015em; color: #70695e; gap: 5px; }
+.hero-editor input, .hero-editor textarea, .hero-editor select { min-width: 0; border: 0; border-bottom: 1px solid #d8cabc; border-radius: 0; background: #f4efe5; color: #282e28; padding: 8px; font-size: 14px; }
+.hero-editor input:focus, .hero-editor textarea:focus, .hero-editor select:focus { outline: 2px solid var(--sheet-red); outline-offset: 2px; background: #fffaf0; }
+.hero-editor input[type=number] { text-align: center; font-family: Fraunces, Georgia, serif; font-size: 22px; padding: 6px 2px; }
+.hero-editor input[type=checkbox] { width: 18px; height: 18px; margin: 0; accent-color: var(--sheet-red); flex-shrink: 0; }
+.hero-editor section, .hero-editor label, .hero-editor div { min-width: 0; }
+.sheet-top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 24px; }
+.sheet-name-row { display: grid; grid-template-columns: 60px minmax(0, 1fr) 60px 60px; gap: 12px; align-items: end; margin-bottom: 20px; }
+.sheet-seal { display: grid; place-items: center; height: 64px; font-size: 46px; color: var(--sheet-red); border: 1px solid #d8cabc; background: #f4efe5; }
+.sheet-name-row input { height: 52px; }
+.sheet-name input { font: 28px Fraunces, Georgia, serif; }
+.sheet-background { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sheet-wide { grid-column: 1 / -1; }
+.sheet-vitals { border-left: 1px solid #ddc4b8; padding-left: 22px; }
+.sheet-resources { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.sheet-resources h3 { text-align: center; font-size: 17px; min-height: 44px; }
+.sheet-current { margin: 8px auto 16px; width: 86px; }
+.sheet-current label { font-size: 0; gap: 0; }
+.sheet-current input { font-size: 38px !important; border: 1px solid #be8171; background: #f7ede1; height: 64px; }
+.sheet-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+.sheet-conditions { margin-top: 18px; border-top: 1px solid #be8171; padding-top: 12px; }
+.sheet-conditions h3 { text-align: center; font-size: 17px; margin-bottom: 12px; }
+.hero-editor .sheet-check { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 12px; }
+.sheet-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 2px solid #be8171; border-bottom: 2px solid #be8171; }
+.sheet-column { padding: 20px 18px; }
+.sheet-column + .sheet-column { border-left: 1px solid #be8171; }
+.sheet-column > h3 { text-align: center; font-size: 26px; }
+.sheet-attribute { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 22px 0; align-items: end; }
+.sheet-attribute label { text-align: center; }
+.sheet-attribute input { height: 55px; font-size: 29px !important; border-bottom: 2px solid #be8171; }
+.sheet-attribute input[name$="TN"] { border: 2px solid var(--sheet-red); background: #f7ede1; }
+.sheet-column h4 { text-align: center; color: #8c6759; font: 11px 'DM Mono', monospace; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 12px; }
+.skill-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 94px; align-items: center; gap: 8px; border-bottom: 1px solid #e7ded0; min-height: 40px; }
+.skill-row > span { font: 14px Georgia, serif; }
+.hero-editor .skill-rating { padding: 8px 2px; font-size: 12px; color: var(--sheet-red); letter-spacing: -1px; }
+.sheet-column-bottom { border-top: 1px solid #be8171; margin-top: 18px; padding-top: 14px; }
+.sheet-column-bottom > h3 { text-align: center; font-size: 18px; margin-bottom: 20px; }
+.sheet-column-bottom .skill-row { grid-template-columns: minmax(0, 1fr) 94px; }
+.sheet-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sheet-section-heading h3 { font-size: 19px; }
+.sheet-section-heading label { width: 60px; text-align: center; }
+.sheet-column-bottom textarea { min-height: 135px; }
+.sheet-gear > h3, .sheet-bottom h3 { margin-bottom: 14px; }
+.sheet-gear-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; }
+.sheet-weapon-row { display: grid; grid-template-columns: 1.6fr .7fr .7fr .7fr 1.5fr; gap: 6px; margin-bottom: 8px; }
+.sheet-weapon-row + .sheet-weapon-row label { font-size: 0; gap: 0; }
+.sheet-armour { padding-left: 18px; border-left: 1px solid #be8171; }
+.sheet-armour > div { display: grid; grid-template-columns: minmax(0, 1fr) 62px 62px; gap: 6px; align-items: end; margin-bottom: 12px; }
+.sheet-armour input[type=number] { font-size: 16px; padding: 7px 2px; }
+.sheet-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; border-top: 2px solid #be8171; padding-top: 22px; }
+.sheet-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.sheet-points label { text-align: center; align-content: end; }
+.sheet-points input { height: 58px; }
+@media (max-width: 1000px) {
+  .sheet-top { grid-template-columns: 1fr; }
+  .sheet-vitals { border-left: 0; padding-left: 0; display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+  .sheet-conditions { margin-top: 0; }
+  .sheet-column { padding: 18px 10px; }
+  .skill-row { grid-template-columns: 18px minmax(0, 1fr) 74px; gap: 5px; }
+  .sheet-gear-grid { grid-template-columns: 1fr; }
+  .sheet-armour { border-left: 0; padding-left: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .sheet-armour > div { grid-template-columns: 1fr 1fr; }
+  .sheet-armour > div > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .hero-editor { padding: 16px; gap: 20px; }
+  .sheet-name-row { grid-template-columns: minmax(0, 1fr) 60px 60px; gap: 8px; }
+  .sheet-seal { display: none; }
+  .sheet-name input { font-size: 23px; }
+  .sheet-vitals, .sheet-columns, .sheet-bottom { grid-template-columns: 1fr; }
+  .sheet-column { padding: 22px 0; }
+  .sheet-column + .sheet-column { border-left: 0; border-top: 2px solid #be8171; }
+  .sheet-attribute { max-width: 350px; margin: auto; }
+  .skill-row { grid-template-columns: 22px minmax(0, 1fr) 116px; min-height: 44px; }
+  .hero-editor .skill-rating { min-height: 40px; font-size: 15px; }
+  .sheet-column-bottom .skill-row { grid-template-columns: minmax(0, 1fr) 116px; }
+  .sheet-weapon-row { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid #ddc4b8; padding-bottom: 12px; margin-bottom: 12px; }
+  .sheet-weapon-row > div:first-child, .sheet-weapon-row > div:last-child { grid-column: 1 / -1; }
+  .sheet-weapon-row + .sheet-weapon-row label { font-size: 10px; gap: 5px; }
+  .sheet-armour { grid-template-columns: 1fr; }
+  .sheet-armour > div { grid-template-columns: minmax(0, 1fr) 66px 66px; }
+  .sheet-armour > div > div:first-child { grid-column: auto; }
+  .sheet-background { grid-template-columns: 1fr; }
+  .hero-editor-top { flex-wrap: nowrap; }
+  .hero-editor-actions { width: auto; margin-left: auto; }
+}
+
+.sheet-disclosure { min-width: 0; border-top: 2px solid #be8171; }
+.sheet-disclosure > summary { padding: 16px 0; cursor: pointer; color: var(--sheet-red); font: 600 21px Fraunces, Georgia, serif; letter-spacing: .02em; list-style: none; }
+.sheet-disclosure > summary::-webkit-details-marker { display: none; }
+.sheet-disclosure > summary:focus-visible { outline: 2px solid var(--sheet-red); outline-offset: 3px; }
+.sheet-disclosure > .sheet-columns { border-top: 0; border-bottom: 0; }
+.sheet-disclosure > .sheet-bottom { border-top: 0; padding-top: 0; }
+
+.sheet-character { border-top: 0; }
+.sheet-character > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 0; list-style: none; }
+/* One geometric marker for every section, independent of browser/font glyphs. */
+.sheet-disclosure:not(.sheet-character) > summary::before,
+.sheet-character-title::before { content: ''; display: inline-block; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 7px solid currentColor; margin-right: 6px; vertical-align: middle; }
+.sheet-disclosure:not(.sheet-character)[open] > summary::before,
+.sheet-character[open] .sheet-character-title::before { transform: rotate(90deg); }
+.sheet-character .hero-editor-actions { width: auto; margin-left: auto; }
