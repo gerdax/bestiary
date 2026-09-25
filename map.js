@@ -45,10 +45,10 @@
   let currentMap = null, selected = null, zoom = 1, offsetX = 0, offsetY = 0, fittedKey = '', gesture = null;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
-  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button><div class="map-zoom-controls" aria-label="Powiększenie mapy"><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><output id="map-zoom-level">100%</output><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button><button type="button" id="map-fit">Dopasuj</button></div></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><strong>Przygotuj pole starcia</strong><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
+  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
   const sceneInput = doc.getElementById('map-scene'), sizeInput = doc.getElementById('map-size');
   const generateButton = doc.getElementById('map-generate'), viewport = doc.getElementById('map-viewport'), stage = doc.getElementById('map-stage');
-  const terrainSvg = doc.getElementById('map-terrain'), tokens = doc.getElementById('map-tokens'), panel = doc.getElementById('map-panel'), blank = doc.getElementById('map-blank'), zoomOutput = doc.getElementById('map-zoom-level'), errorBox = doc.getElementById('map-error');
+  const terrainSvg = doc.getElementById('map-terrain'), tokens = doc.getElementById('map-tokens'), panel = doc.getElementById('map-panel'), blank = doc.getElementById('map-blank'), errorBox = doc.getElementById('map-error');
   function run(action) { try { action(); errorBox.hidden = true; } catch (error) { errorBox.textContent = error && error.message ? error.message : 'Nie udało się zapisać zmiany mapy.'; errorBox.hidden = false; } }
   function shape(record, parent) {
     if (!record || !Number.isFinite(record.x) || !Number.isFinite(record.y) || !Number.isFinite(record.r)) return;
@@ -139,10 +139,10 @@
     heroSheet.show(!store.loadError && currentMap && selectedHero ? selectedHero.heroId : null);
     panel.replaceChildren();
     if (store.loadError) { panel.append(el('p', 'eyebrow', 'BŁĄD ZAPISU'), el('h3', '', 'Nie można wczytać danych'), el('p', 'map-panel-help', 'Przywróć poprawną kopię zapasową, aby ponownie korzystać z mapy.')); return; }
-    if (!currentMap) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Mapa czeka na scenerię'), el('p', 'map-panel-help', 'Utwórz mapę, a uczestnicy starcia pojawią się na niej automatycznie.')); return; }
+    if (!currentMap) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Stwórz mapę, by zobaczyć dodanych uczestników')); return; }
     if (!participants.length) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Pusta mapa'), el('p', 'map-panel-help', 'Dodaj bohatera lub przeciwnika do aktywnej walki.')); return; }
     const names = displayNames(participants), index = participants.findIndex(p => p.id === selected), person = participants[index];
-    if (!person) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Wybierz znacznik'), el('p', 'map-panel-help', 'Dotknij znacznika na mapie, aby zobaczyć zasoby i działania.')); return; }
+    if (!person) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Dotknij znacznika postaci na mapie, aby zobaczyć zasoby i działania.')); return; }
     const heading = el('div', 'map-panel-heading');
     const previous = el('button', 'map-cycle-prev', '‹'), next = el('button', 'map-cycle-next', '›');
     const typeName = person.type === 'hero' ? 'bohater' : 'przeciwnik';
@@ -195,7 +195,7 @@
     defeated.type = 'button'; defeated.addEventListener('click', () => { run(() => store.toggleDefeated(person.id)); const replacement = panel.querySelector('.map-panel-action'); if (replacement) replacement.focus(); }); panel.appendChild(defeated);
     const remove = el('button', 'map-panel-remove', 'Usuń z potyczki'); remove.type = 'button'; remove.addEventListener('click', () => { if (root.confirm(`Usunąć ${names[index]} z potyczki?`)) run(() => store.removeParticipant(person.id)); }); panel.appendChild(remove);
   }
-  function transform() { stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`; zoomOutput.value = Math.round(zoom * 100) + '%'; zoomOutput.textContent = zoomOutput.value; }
+  function transform() { stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`; }
   function fit() { if (!currentMap || !viewport.clientWidth || !viewport.clientHeight) return; zoom = clamp(Math.min((viewport.clientWidth - 24) / currentMap.width, (viewport.clientHeight - 24) / currentMap.height), .1, 2.5); offsetX = (viewport.clientWidth - currentMap.width * zoom) / 2; offsetY = (viewport.clientHeight - currentMap.height * zoom) / 2; transform(); }
   function zoomAt(factor, x = viewport.clientWidth / 2, y = viewport.clientHeight / 2) { if (!currentMap) return; const next = clamp(zoom * factor, .1, 3); offsetX = x - (x - offsetX) * next / zoom; offsetY = y - (y - offsetY) * next / zoom; zoom = next; transform(); }
   function refresh(snapshot) {
@@ -228,7 +228,7 @@
   doc.getElementById('map-fit').addEventListener('click', fit);
   viewport.addEventListener('wheel', event => { if (!currentMap) return; event.preventDefault(); const box = viewport.getBoundingClientRect(); const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1); zoomAt(Math.exp(-clamp(pixels, -100, 100) * .0099), event.clientX - box.left, event.clientY - box.top); }, { passive: false });
   viewport.addEventListener('pointerdown', event => {
-    if (!currentMap || gesture || event.button !== 0) return;
+    if (!currentMap || gesture || event.button !== 0 || event.target.closest('.map-zoom-controls')) return;
     const marker = event.target.closest('.map-token');
     if (marker) {
       marker.focus();
