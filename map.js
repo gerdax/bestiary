@@ -129,7 +129,14 @@
     });
     controls.append(minus, number, plus); box.appendChild(controls); container.appendChild(box);
   }
+  const heroSheetHost = el('div', 'map-hero-sheet');
+  heroSheetHost.id = 'map-hero-sheet';
+  heroSheetHost.hidden = true;
+  section.append(heroSheetHost);
+  const heroSheet = root.OneRingHeroSheet.mount(heroSheetHost);
   function renderPanel(participants) {
+    const selectedHero = participants.find(p => p.id === selected && p.type === "hero");
+    heroSheet.show(!store.loadError && currentMap && selectedHero ? selectedHero.heroId : null);
     panel.replaceChildren();
     if (store.loadError) { panel.append(el('p', 'eyebrow', 'BŁĄD ZAPISU'), el('h3', '', 'Nie można wczytać danych'), el('p', 'map-panel-help', 'Przywróć poprawną kopię zapasową, aby ponownie korzystać z mapy.')); return; }
     if (!currentMap) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Mapa czeka na scenerię'), el('p', 'map-panel-help', 'Utwórz mapę, a uczestnicy starcia pojawią się na niej automatycznie.')); return; }

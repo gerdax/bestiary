@@ -28,7 +28,8 @@
   const list = host.querySelector("#hero-list"), form = host.querySelector("#hero-editor");
 
   function field(label, name, type = "text", extra = "") { return `<label>${label}<input name="${name}" type="${type}" ${extra}></label>`; }
-  function drawEditor(hero) {
+  function drawEditor(hero, target = form, preferences = sectionOpen, embedded = false) {
+    const form = target, sectionOpen = preferences;
     form.querySelectorAll('[data-sheet-section]').forEach(section => {
       sectionOpen[section.dataset.sheetSection] = section.open;
     });
@@ -38,7 +39,7 @@
     const numberField = (label, name) => field(label, name, "number", `min="0" value="${input(name) || 0}"`);
     const area = (label, name, rows = 3) => `<label>${label}<textarea name="${name}" rows="${rows}" maxlength="4000"></textarea></label>`;
     const check = (label, name) => `<label class="sheet-check"><input type="checkbox" name="${name}" ${value(name) ? "checked" : ""}><span>${label}</span></label>`;
-    const rating = (label, name, favoured = false) => `<div class="skill-row">${favoured ? `<input type="checkbox" name="${name}Favoured" aria-label="${label}: umiejętność ulubiona" ${value(name + "Favoured") ? "checked" : ""}>` : ""}<span id="label-${name}">${label}</span><select class="skill-rating" name="${name}" aria-labelledby="label-${name}">${Array.from({length: 7}, (_, n) => `<option value="${n}">${n ? "◆".repeat(n) : "—"}</option>`).join("")}</select></div>`;
+    const rating = (label, name, favoured = false) => `<div class="skill-row">${favoured ? `<input type="checkbox" name="${name}Favoured" aria-label="${label}: umiejętność ulubiona" ${value(name + "Favoured") ? "checked" : ""}>` : ""}<span id="${form.id}-label-${name}">${label}</span><select class="skill-rating" name="${name}" aria-labelledby="${form.id}-label-${name}">${Array.from({length: 7}, (_, n) => `<option value="${n}">${n ? "◆".repeat(n) : "—"}</option>`).join("")}</select></div>`;
     const attributes = [["Siła", "strength", "strengthTN", "Max wytrz.", "maxEndurance"], ["Serce", "heart", "heartTN", "Max nadzieja", "maxHope"], ["Rozum", "wits", "witsTN", "Obrona", "parry"]];
     form.innerHTML = `<div class="hero-editor-top"><div class="hero-editor-actions"></div></div>
       <div class="sheet-top">
@@ -82,16 +83,80 @@
     fields.forEach(name => { const control = form.elements[name]; if (!control) return; if (booleans.has(name)) control.checked = !!value(name); else control.value = value(name); });
     form.elements.name.required = true;
     form.elements.name.maxLength = 80;
-    if (hero) { const actions = form.querySelector(".hero-editor-actions"), footer = form.querySelector(".hero-editor-footer-actions"), inBattle = store.getState().heroParticipants.some(p => p.heroId === hero.id); const battle = el("button", "text-button", inBattle ? "Usuń z potyczki" : "Dodaj do potyczki"); battle.type = "button"; battle.dataset.heroAction = "battle"; battle.dataset.id = hero.id;  actions.append(battle); const remove = el("button", "text-button danger", "Usuń bohatera"); remove.type = "button"; remove.dataset.heroAction = "delete"; remove.dataset.id = hero.id; footer.append(remove); }
-    draftDirty = false; dirtyFields.clear();
+    if (hero && !embedded) { const actions = form.querySelector(".hero-editor-actions"), footer = form.querySelector(".hero-editor-footer-actions"), inBattle = store.getState().heroParticipants.some(p => p.heroId === hero.id); const battle = el("button", "text-button", inBattle ? "Usuń z potyczki" : "Dodaj do potyczki"); battle.type = "button"; battle.dataset.heroAction = "battle"; battle.dataset.id = hero.id;  actions.append(battle); const remove = el("button", "text-button danger", "Usuń bohatera"); remove.type = "button"; remove.dataset.heroAction = "delete"; remove.dataset.id = hero.id; footer.append(remove); }
+    if (!embedded) { draftDirty = false; dirtyFields.clear(); }
   }
+  // Each cached sheet keeps its draft; disclosures reset when selection changes.
+  // The same renderer serves both views; only saved fields go through the shared store.
+  let embeddedSheetSequence = 0;
+  window.OneRingHeroSheet = {
+    mount(container) {
+      const sheets = new Map();
+      return {
+        show(id) {
+          for (const [key] of sheets) if (!heroById(key)) sheets.delete(key);
+          const hero = id && heroById(id);
+          container.hidden = !hero;
+          if (!hero) { container.replaceChildren(); return; }
+          let sheet = sheets.get(id);
+          if (!sheet) {
+            const editor = el("form", "paper form-card hero-editor");
+            editor.id = "map-hero-editor-" + (++embeddedSheetSequence);
+            editor.noValidate = true;
+            editor.setAttribute("aria-label", "Arkusz wybranego bohatera");
+            const dirty = new Set();
+            const status = text => { editor.querySelector(".hero-save-status").textContent = text; };
+            const sync = () => {
+              const current = heroById(id);
+              if (!current) return;
+              fields.forEach(name => {
+                const control = editor.elements[name];
+                if (!control || dirty.has(name)) return;
+                if (booleans.has(name)) control.checked = !!current[name];
+                else {
+                  const value = String(current[name] ?? (numeric.has(name) ? 0 : ""));
+                  if (control.value !== value) control.value = value;
+                }
+              });
+            };
+            drawEditor(hero, editor, {character:false, attributes:false, gear:false, equipment:false}, true);
+            editor.addEventListener("input", event => {
+              if (fields.includes(event.target.name)) { dirty.add(event.target.name); status("Niezapisane zmiany"); }
+            });
+            editor.addEventListener("change", event => {
+              const name = event.target.name;
+              if (!fields.includes(name)) return;
+              dirty.add(name);
+              if (!validForm([name], editor)) { status("Popraw zaznaczone pole."); return; }
+              const value = booleans.has(name) ? event.target.checked : numeric.has(name) ? Number(event.target.value) : event.target.value.trim();
+              try {
+                store.saveHero({id, [name]:value});
+                dirty.delete(name);
+                sync();
+                status(dirty.size ? "Niezapisane zmiany" : "Zapisano automatycznie");
+              } catch (_) { status("Nie udało się zapisać pola."); }
+            });
+            editor.addEventListener("submit", event => { event.preventDefault(); if (editor.contains(document.activeElement)) document.activeElement.blur(); });
+            sheet = {editor, sync};
+            sheets.set(id, sheet);
+          }
+          sheet.sync();
+          if (container.firstElementChild !== sheet.editor) {
+            sheet.editor.querySelectorAll('details').forEach(section => { section.open = false; });
+            container.replaceChildren(sheet.editor);
+          }
+        }
+      };
+    }
+  };
   function status(text) { const target = form.querySelector(".hero-save-status"); if (target) target.textContent = text; }
   function edit(id) { const hero = heroById(id); if (!hero) return; editingId = id; drawEditor(hero); renderList(); }
   function restoreEditor() { const hero = heroById(editingId); if (hero) drawEditor(hero); }
   function createHero() { if (!mayDiscard()) return; try { const saved = store.saveHero({ name: "Bohater" }); editingId = saved.id; drawEditor(saved); renderList(); } catch (_) { const prior = host.querySelector(".hero-create-status"); if (prior) prior.remove(); host.querySelector(".hero-heading").append(el("span", "hero-create-status", "Nie udało się utworzyć bohatera.")); } }
   function mayDiscard() { return !draftDirty || confirm("Niezapisany szkic zostanie porzucony."); }
   function discardDraft() { restoreEditor(); }
-  function validForm(names) {
+  function validForm(names, target = form) {
+    const form = target;
     for (const name of names) {
       const control = form.elements[name]; if (!control) continue;
       if (numeric.has(name) && (!control.value.trim() || !Number.isFinite(Number(control.value)) || Number(control.value) < 0)) { control.setCustomValidity("Podaj liczbę równą zero lub większą."); control.reportValidity(); control.setCustomValidity(""); return false; }

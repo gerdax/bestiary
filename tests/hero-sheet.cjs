@@ -12,6 +12,13 @@ const { chromium } = require('playwright');
     await page.locator('[data-hero-action="new"]').click();
     const defaults = await page.locator('#hero-editor input[type="number"]').evaluateAll(nodes => nodes.map(n => ({name: n.name, value: n.value})));
     for (const field of defaults) assert.equal(field.value, '0', `initial ${field.name}`);
+    for (const summary of await page.locator('.sheet-disclosure > summary').all()) {
+      const geometry = () => summary.evaluate(n => { const r = n.getBoundingClientRect(); return {top:r.top + scrollY,height:r.height,padding:getComputedStyle(n).padding}; });
+      const before = await geometry();
+      await summary.press('Enter');
+      assert.deepEqual(await geometry(), before, 'section header must not jump on toggle');
+      await summary.press('Enter');
+    }
     const values = { name: 'Gerard', culture: 'Elfowie z Lindonu', calling: 'Przywódca', age: '111', strength: '4', strengthTN: '16', heart: '4', heartTN: '16', wits: '6', witsTN: '14', maxEndurance: '24', endurance: '24', maxHope: '12', hope: '9', parry: '18', distinctiveFeatures: 'Zdolności przywódcze, Bystrooki, Chyży', culturalBlessing: 'Na sposób elfów', shadowPath: 'Pokusa Władzy', rewards: 'Potężna broń (Łuk)', virtues: 'Gibkość', weapon0Name: 'Łuk', weapon0Damage: '4', weapon0Injury: '14', weapon0Load: '2', weapon0Notes: 'Broń dystansowa', armourName: 'Skórzany kubrak', armour: '2', equipment: 'Latarnia „Gwiazda Wieczorna”\nDwa ostre noże' };
     for (const [key, value] of Object.entries(values)) {
       const control = page.locator(`#hero-editor [name="${key}"]`);

@@ -6,7 +6,7 @@
 .hero-list-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .hero-empty { padding: 22px; color: var(--muted); text-align: center; border: 1px dashed var(--line); }
 .hero-editor { display: grid; gap: 16px; padding: 24px; }
-#hero-editor[hidden] { display: none; }
+.hero-editor[hidden] { display: none; }
 .hero-editor-top { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .hero-editor h3 { margin: 0; color: var(--ink); font-family: Fraunces, Georgia, serif; }
 .hero-editor-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
@@ -111,17 +111,26 @@
 }
 
 .sheet-disclosure { min-width: 0; border-top: 2px solid #be8171; }
-.sheet-disclosure > summary { padding: 16px 0; cursor: pointer; color: var(--sheet-red); font: 600 21px Fraunces, Georgia, serif; letter-spacing: .02em; list-style: none; }
+.sheet-disclosure > summary { padding: 8px 0; min-height: 44px; cursor: pointer; color: var(--sheet-red); font: 600 21px Fraunces, Georgia, serif; letter-spacing: .02em; list-style: none; }
 .sheet-disclosure > summary::-webkit-details-marker { display: none; }
 .sheet-disclosure > summary:focus-visible { outline: 2px solid var(--sheet-red); outline-offset: 3px; }
 .sheet-disclosure > .sheet-columns { border-top: 0; border-bottom: 0; }
 .sheet-disclosure > .sheet-bottom { border-top: 0; padding-top: 0; }
 
 .sheet-character { border-top: 0; }
-.sheet-character > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 0; list-style: none; }
+.sheet-character > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0; list-style: none; }
 /* One geometric marker for every section, independent of browser/font glyphs. */
 .sheet-disclosure:not(.sheet-character) > summary::before,
 .sheet-character-title::before { content: ''; display: inline-block; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 7px solid currentColor; margin-right: 6px; vertical-align: middle; }
 .sheet-disclosure:not(.sheet-character)[open] > summary::before,
 .sheet-character[open] .sheet-character-title::before { transform: rotate(90deg); }
 .sheet-character .hero-editor-actions { width: auto; margin-left: auto; }
+
+/* Compact closed sections; summary geometry stays identical in both states. */
+.sheet-disclosure:not([open]) { margin-bottom: -12px; }
+
+.sheet-disclosure[open] > summary + * { margin-top: 8px; }
+.sheet-character[open] > summary + * { margin-top: 16px; }
+
+.map-hero-sheet { margin-top: 24px; }
+.map-hero-sheet[hidden] { display: none; }
