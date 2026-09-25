@@ -89,7 +89,7 @@ const { chromium } = require('playwright');
     await page.locator('[data-sheet-section="gear"] > summary').focus();
     await page.locator('[data-sheet-section="gear"] > summary').press('Enter');
     assert.deepEqual(await openSections(), [false, false, false]);
-    await page.locator('[data-tab="generator"]').click();
+    await page.locator('[data-tab="opponents"]').click();
     await page.locator('[data-tab="heroes"]').click();
     assert.deepEqual(await openSections(), [false, false, false], 'navigation retains view state');
     for (const key of ['attributes', 'gear', 'equipment']) await page.locator(`[data-sheet-section="${key}"] > summary`).click();

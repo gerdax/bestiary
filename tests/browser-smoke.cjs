@@ -42,11 +42,13 @@ async function main() {
   assert.equal(await page.locator('[data-tab="battle"]').isDisabled(), true);
 
   // Add the same enemy twice through the generator; the map is the encounter UI.
-  await page.locator('[data-tab="generator"]').click();
+  await page.locator('[data-tab="opponents"]').click();
+  await page.locator('#create-enemy').click();
   await page.locator('#name').fill('Smoke Uruk');
   await page.locator('#enemy-form button[data-action="battle"]').click();
   assert.equal(await page.locator('#map').evaluate(node => node.classList.contains('active')), true);
-  await page.locator('[data-tab="generator"]').click();
+  await page.locator('[data-tab="opponents"]').click();
+  await page.locator('#create-enemy').click();
   await page.locator('#enemy-form button[data-action="battle"]').click();
   assert.equal(await page.locator('#map').evaluate(node => node.classList.contains('active')), true);
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('one-ring-state')).battle.length), 2);
@@ -74,7 +76,9 @@ async function main() {
   await page.mouse.move(viewport.x + 210, viewport.y + 55, { steps: 6 });
   await page.mouse.up();
 
-  // Drag a marker at current zoom, then verify the stored placement survives reload.
+  // Fit after panning so the marker is inside the interactive viewport before dragging.
+  await page.locator('#map-fit').click();
+  // Verify the stored placement survives reload.
   const token = page.locator('.hero-token').first();
   const tokenId = await token.getAttribute('data-id');
   const posBefore = await page.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).map.positions[id], tokenId);

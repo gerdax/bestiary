@@ -417,3 +417,8 @@ label, input, select, textarea { min-width: 0; }
 
 /* Temporarily disabled encounter-card view; the map is the active encounter UI. */
 .tabs .tab[hidden], #battle[hidden] { display: none; }
+
+#opponents > [hidden] { display: none; }
+.library-card.is-saved { outline: 2px solid var(--moss); outline-offset: 2px; }
+#library > .section-heading { gap: 16px; flex-wrap: wrap; }
+#library .library-transfer { align-items: center; flex-wrap: wrap; }
