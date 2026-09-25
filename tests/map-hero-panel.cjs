@@ -9,6 +9,9 @@ const { chromium } = require('playwright');
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(process.env.BASE_URL || 'http://127.0.0.1:8765');
     assert.equal(await page.locator('#map-count').textContent(),'0');
+    await page.locator('[data-tab="map"]').click();
+    await page.locator('#map-add-heroes').click();
+    assert.equal(await page.locator('#map-count').textContent(),'0');
     const ids = await page.evaluate(() => {
       const store = window.OneRingStore;
       const heroes = [
@@ -95,6 +98,8 @@ const { chromium } = require('playwright');
     assert.equal((await page.locator('#map-viewport').boundingBox()).height, heroPanelHeight);
     await page.locator('.map-layout').screenshot({path:'/tmp/map-hero-panel.png'});
     await page.locator(`.map-token[data-id="${ids.enemies[0]}"]`).click();
+    assert.deepEqual(await panel.locator('.map-panel-facts span').allTextContents(),['Zajadł.','Potęga','Obrona','Pancerz']);
+    assert.equal(await panel.locator('.map-panel-hero-facts').count(),1);
     assert.equal((await panel.boundingBox()).height, heroPanelHeight);
     assert.equal((await page.locator('#map-viewport').boundingBox()).height, heroPanelHeight);
     for (const expected of ['Goblin 1','Goblin 2','Wilk']) {
@@ -136,6 +141,11 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('#map-stage').isVisible(),false);
     assert.equal(await page.locator('#map-blank').isVisible(),true);
     assert.deepEqual(errors,[]);
+    await page.locator('#map-add-heroes').click();
+    const added = await page.evaluate(()=>OneRingStore.getState());
+    assert.equal(added.heroParticipants.length,added.heroes.length);
+    await page.locator('#map-add-heroes').click();
+    assert.deepEqual(await page.evaluate(()=>OneRingStore.getState().heroParticipants),added.heroParticipants);
     console.log('Map hero panel passed: shared fields, stance, defeat, separate cyclic navigation, reload, responsive layout, removal.');
   } finally { await browser.close(); }
 })().catch(e => {console.error(e);process.exitCode=1;});

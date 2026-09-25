@@ -140,3 +140,26 @@ test('clearEncounter atomically removes map and participants but retains sheets 
   assert.equal(events.length, 1); assert.deepEqual(events[0], after);
   assert.deepEqual(createStore(disk).exportBackup(), after);
 });
+
+test('shadow scars set the shadow floor across saves, reload and restore', () => {
+  const disk = storage();
+  const store = createStore(disk);
+  const h = store.saveHero({name:'Frodo',shadow:0,shadowScars:2});
+  assert.equal(h.shadow,2);
+  assert.equal(store.saveHero({id:h.id,shadow:1}).shadow,2);
+  assert.equal(store.saveHero({id:h.id,shadow:6}).shadow,6);
+  assert.equal(store.saveHero({id:h.id,shadowScars:3}).shadow,6);
+  assert.equal(store.saveHero({id:h.id,shadowScars:8}).shadow,8);
+  assert.equal(store.saveHero({id:h.id,shadowScars:0}).shadow,8);
+  store.addHero(h.id);
+  assert.equal(store.getParticipants()[0].shadow,8);
+  assert.equal(createStore(disk).getState().heroes[0].shadow,8);
+  const backup = store.exportBackup();
+  backup.heroes[0].shadow = 0;
+  backup.heroes[0].shadowScars = 2;
+  const oldDisk = storage({'one-ring-state':JSON.stringify(backup)});
+  assert.equal(createStore(oldDisk).getState().heroes[0].shadow,2);
+  assert.equal(JSON.parse(oldDisk.data['one-ring-state']).heroes[0].shadow,0);
+  store.restoreBackup(backup);
+  assert.equal(store.getState().heroes[0].shadow,2);
+});

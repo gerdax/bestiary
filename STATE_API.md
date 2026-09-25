@@ -59,3 +59,7 @@ Existing maps retain their dimensions until regenerated.
 `clearEncounter()` atomically removes battle enemies, hero participants and the map,
 while retaining hero sheets and the enemy library. `clearBattle()` retains its
 original contract (participants only).
+
+Hero `shadow` is clamped to at least `shadowScars` during normalization, including
+save, load and backup restore. Raising scars raises shadow when necessary; lowering
+scars does not lower the existing shadow value. The backup version remains 2.

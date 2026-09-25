@@ -45,7 +45,7 @@
   let currentMap = null, selected = null, zoom = 1, offsetX = 0, offsetY = 0, fittedKey = '', gesture = null;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
-  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
+  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
   const sceneInput = doc.getElementById('map-scene'), sizeInput = doc.getElementById('map-size');
   const generateButton = doc.getElementById('map-generate'), viewport = doc.getElementById('map-viewport'), stage = doc.getElementById('map-stage');
   const terrainSvg = doc.getElementById('map-terrain'), tokens = doc.getElementById('map-tokens'), panel = doc.getElementById('map-panel'), blank = doc.getElementById('map-blank'), errorBox = doc.getElementById('map-error');
@@ -173,8 +173,8 @@
     if (person.type === 'hero') addAdjuster(resources, person.id, 'hope', person.hope, person.maxHope, 'Nadzieja');
     else addAdjuster(resources, person.id, 'hate', person.hate, person.maxHate, person.kind === 'Człowiek' ? 'Determinacja' : 'Nienawiść');
     panel.appendChild(resources);
-    const facts = el('div', 'map-panel-facts' + (person.type === 'hero' ? ' map-panel-hero-facts' : ''));
-    const factValues = person.type === 'hero' ? [['Obrona', person.parry], ['Pancerz', person.armour], ['Obciąż.', person.load], ['Cień', person.shadow]] : [['Obrona', person.parry], ['Pancerz', person.armour]];
+    const facts = el('div', 'map-panel-facts map-panel-hero-facts');
+    const factValues = person.type === 'hero' ? [['Obrona', person.parry], ['Pancerz', person.armour], ['Obciąż.', person.load], ['Cień', person.shadow]] : [['Zajadł.', person.fierceness], ['Potęga', person.might], ['Obrona', person.parry], ['Pancerz', person.armour]];
     for (const [label, value] of factValues) { const fact = el('div'); fact.append(el('span', '', label), el('strong', '', value ?? '—')); facts.appendChild(fact); }
     panel.appendChild(facts);
     const detail = (label, value) => { if (value == null || value === '') return; const item = el('p', 'map-panel-detail'); item.append(el('b', '', label + ': '), doc.createTextNode(String(value))); panel.appendChild(item); };
@@ -215,6 +215,11 @@
     } else { fittedKey = ''; selected = null; tokens.replaceChildren(); }
     renderPanel(participants);
   }
+  doc.getElementById('map-add-heroes').addEventListener('click', () => run(() => {
+    const snapshot = store.getState();
+    const participating = new Set(snapshot.heroParticipants.map(p => p.heroId));
+    snapshot.heroes.filter(hero => !participating.has(hero.id)).forEach(hero => store.addHero(hero.id));
+  }));
   doc.getElementById('map-clear').addEventListener('click', () => {
     if (root.confirm('Wyczyścić potyczkę? Mapa i wszyscy uczestnicy zostaną usunięci z potyczki. Arkusze bohaterów i biblioteka pozostaną zachowane.')) run(() => store.clearEncounter());
   });

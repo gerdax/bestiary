@@ -81,6 +81,7 @@
       section.append(content);
     });
     fields.forEach(name => { const control = form.elements[name]; if (!control) return; if (booleans.has(name)) control.checked = !!value(name); else control.value = value(name); });
+    form.elements.shadow.min = String(hero ? hero.shadowScars : 0);
     form.elements.name.required = true;
     form.elements.name.maxLength = 80;
     if (hero && !embedded) { const actions = form.querySelector(".hero-editor-actions"), footer = form.querySelector(".hero-editor-footer-actions"), inBattle = store.getState().heroParticipants.some(p => p.heroId === hero.id); const battle = el("button", "text-button", inBattle ? "Usuń z potyczki" : "Dodaj do potyczki"); battle.type = "button"; battle.dataset.heroAction = "battle"; battle.dataset.id = hero.id;  actions.append(battle); const remove = el("button", "text-button danger", "Usuń bohatera"); remove.type = "button"; remove.dataset.heroAction = "delete"; remove.dataset.id = hero.id; footer.append(remove); }
@@ -109,6 +110,7 @@
             const sync = () => {
               const current = heroById(id);
               if (!current) return;
+              editor.elements.shadow.min = String(current.shadowScars);
               fields.forEach(name => {
                 const control = editor.elements[name];
                 if (!control || dirty.has(name)) return;
@@ -168,6 +170,7 @@
     if (!editingId) return;
     const hero = heroById(editingId);
     if (!hero) { editingId = null; draftDirty = false; dirtyFields.clear(); return; }
+    form.elements.shadow.min = String(hero.shadowScars);
     fields.forEach(name => { const control = form.elements[name]; if (!control || dirtyFields.has(name)) return; if (booleans.has(name)) { control.checked = !!hero[name]; return; } const next = hero[name] == null ? (numeric.has(name) ? "0" : "") : String(hero[name]); if (control.value !== next) control.value = next; });
   }
   function renderList() {

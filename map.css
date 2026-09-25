@@ -76,3 +76,6 @@
 }
 
 #map .map-heading { justify-content: space-between; }
+
+.map-heading-actions { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: flex-end; }
+#map .map-heading { flex-wrap: wrap; }

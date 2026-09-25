@@ -43,6 +43,7 @@
     const result = { id: typeof raw.id === "string" && raw.id ? raw.id : id() };
     HERO_STRINGS.forEach(field => { result[field] = raw[field] == null ? (field === "stance" ? "Wyważona" : "") : String(raw[field]); });
     HERO_NUMBERS.forEach(field => { result[field] = Math.max(0, number(raw[field], 0)); });
+    result.shadow = Math.max(result.shadow, result.shadowScars);
     HERO_BOOLEANS.forEach(field => { result[field] = !!raw[field]; });
     HERO_SKILLS.forEach(name => {
       result["skill" + name] = clamp(Math.trunc(number(raw["skill" + name], 0)), 0, 6);
