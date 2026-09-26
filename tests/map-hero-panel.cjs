@@ -102,10 +102,19 @@ const { chromium } = require('playwright');
     assert.equal(await panel.locator('.map-panel-hero-facts').count(),1);
     assert.equal((await panel.boundingBox()).height, heroPanelHeight);
     assert.equal((await page.locator('#map-viewport').boundingBox()).height, heroPanelHeight);
-    for (const expected of ['Goblin 1','Goblin 2','Wilk']) {
+    assert.deepEqual(await page.locator('.enemy-token .map-token-label').allTextContents(),['Wilk','Goblin','Goblin']);
+    const enemyCycle = [...ids.enemies.slice(1).sort((a,b)=>a.localeCompare(b)),ids.enemies[0]];
+    for (const [index, expected] of ['Goblin','Goblin','Wilk'].entries()) {
       await panel.locator('.map-cycle-next').click(); assert.equal(await title(),expected);
+      assert.equal(await page.locator('.map-token.is-selected').getAttribute('data-id'),enemyCycle[index]);
     }
-    await panel.locator('.map-cycle-prev').click(); assert.equal(await title(),'Goblin 2');
+    const selectedSymbol = page.locator('.map-token.is-selected .map-token-symbol');
+    assert.equal(await selectedSymbol.evaluate(node=>getComputedStyle(node).outlineWidth),'6px');
+    assert.equal(await selectedSymbol.evaluate(node=>getComputedStyle(node).animationName),'selected-token-pulse');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    assert.equal(await selectedSymbol.evaluate(node=>getComputedStyle(node).animationName),'none');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await panel.locator('.map-cycle-prev').click(); assert.equal(await title(),'Goblin');
     await panel.getByRole('button',{name:'Oznacz jako pokonanego'}).click();
     await panel.getByRole('button',{name:'Przywróć do walki'}).click();
     await page.reload();

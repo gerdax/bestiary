@@ -81,9 +81,7 @@
     svg('rect', { x: 3, y: 3, width: map.width - 6, height: map.height - 6, fill: 'none', stroke: '#4f493a', 'stroke-width': 6, opacity: .55 }, terrainSvg);
   }
   function displayNames(participants) {
-    const counts = {}, used = {};
-    participants.filter(p => p.type === 'enemy').forEach(p => { const name = String(p.name || p.kind || 'Przeciwnik'); counts[name] = (counts[name] || 0) + 1; });
-    return participants.map(p => { const name = String(p.name || p.kind || (p.type === 'hero' ? 'Bohater' : 'Przeciwnik')); if (p.type === 'enemy' && counts[name] > 1) { used[name] = (used[name] || 0) + 1; return name + ' ' + used[name]; } return name; });
+    return participants.map(p => String(p.name || p.kind || (p.type === 'hero' ? 'Bohater' : 'Przeciwnik')));
   }
   function displayedStance(value) { return value === 'Ostrożna' ? 'Defensywna' : STANCES.includes(value) ? value : 'Wyważona'; }
   function cycleParticipants(participants, names, person, direction) {

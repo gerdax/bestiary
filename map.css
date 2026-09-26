@@ -20,7 +20,12 @@
 .map-token-symbol { position: relative; display: grid; place-items: center; width: 43px; height: 43px; border: 3px solid #f4e9cf; border-radius: 50%; background: #356149; box-shadow: 0 2px 7px #1d2119a6, inset 0 0 0 2px #294735; font: 24px Georgia, serif; }
 .enemy-token .map-token-symbol { background: #a6473b; box-shadow: 0 2px 7px #1d2119a6, inset 0 0 0 2px #703b32; font-size: 19px; }
 .map-token-label { max-width: 122px; overflow: hidden; padding: 3px 7px; background: rgb(44 36 29 / .86); border: 1px solid rgb(243 226 194 / .5); color: #fff7e7; font: 600 12px Georgia, serif; text-overflow: ellipsis; white-space: nowrap; }
-.map-token.is-selected .map-token-symbol { outline: 3px solid #edc379; outline-offset: 2px; }
+.map-token.is-selected .map-token-symbol { outline: 6px solid #f6ce65; outline-offset: 3px; animation: selected-token-pulse 1.8s ease-in-out infinite; }
+@keyframes selected-token-pulse {
+  0%, 100% { outline-offset: 3px; box-shadow: 0 0 0 6px rgb(246 206 101 / .2), 0 2px 7px #1d2119a6, inset 0 0 0 2px #294735; }
+  50% { outline-offset: 6px; box-shadow: 0 0 0 13px rgb(246 206 101 / .4), 0 2px 7px #1d2119a6, inset 0 0 0 2px #294735; }
+}
+@media (prefers-reduced-motion: reduce) { .map-token.is-selected .map-token-symbol { animation: none; } }
 .map-token.is-defeated { opacity: .53; }
 .map-token.is-defeated .map-token-symbol { filter: grayscale(1); }
 .map-token.is-defeated .map-token-symbol::after { content: '×'; position: absolute; color: white; font: 36px Georgia, serif; text-shadow: 0 1px 3px #3a2720; }
