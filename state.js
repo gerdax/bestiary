@@ -31,6 +31,7 @@
     const maxHate = Math.max(0, number(raw.maxHate, number(raw.hate, 0)));
     return Object.assign({}, raw, {
       id: typeof raw.id === "string" && raw.id ? raw.id : id(), kind,
+      resourceType: ["hate", "determination"].includes(raw.resourceType) ? raw.resourceType : (kind === "Człowiek" ? "determination" : "hate"),
       category: raw.category || CATEGORIES[kind] || "Własne", source: raw.source === "Mój szablon" ? "Własne" : (raw.source || "Własne"),
       fierceness: number(raw.fierceness, 3), might: number(raw.might, 1), maxEndurance, maxHate,
       endurance: clamp(number(raw.endurance, maxEndurance), 0, maxEndurance),

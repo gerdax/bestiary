@@ -171,7 +171,7 @@
     }
     const resources = el('div', 'map-resources'); addAdjuster(resources, person.id, 'endurance', person.endurance, person.maxEndurance, 'Wytrzymałość');
     if (person.type === 'hero') addAdjuster(resources, person.id, 'hope', person.hope, person.maxHope, 'Nadzieja');
-    else addAdjuster(resources, person.id, 'hate', person.hate, person.maxHate, person.kind === 'Człowiek' ? 'Determinacja' : 'Nienawiść');
+    else addAdjuster(resources, person.id, 'hate', person.hate, person.maxHate, person.resourceType === 'determination' ? 'Determinacja' : 'Nienawiść');
     panel.appendChild(resources);
     const facts = el('div', 'map-panel-facts map-panel-hero-facts');
     const factValues = person.type === 'hero' ? [['Obrona', person.parry], ['Pancerz', person.armour], ['Obciąż.', person.load], ['Cień', person.shadow]] : [['Zajadł.', person.fierceness], ['Potęga', person.might], ['Obrona', person.parry], ['Pancerz', person.armour]];

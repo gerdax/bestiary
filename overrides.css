@@ -425,3 +425,11 @@ label, input, select, textarea { min-width: 0; }
 
 #legacy-battle-link { margin-left: auto; color: var(--muted); font-size: 12px; text-decoration: none; }
 #legacy-battle-link:hover { text-decoration: underline; }
+
+.kind-field { display: grid; gap: 7px; }
+.kind-combobox { position: relative; min-width: 0; }
+.kind-combobox input { padding-right: 40px; }
+#kind-toggle { position: absolute; right: 1px; top: 1px; bottom: 1px; width: 36px; border: 0; background: transparent; color: var(--ink); cursor: pointer; font-size: 18px; }
+#enemy-kind-options { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; max-height: 240px; overflow-y: auto; border: 1px solid var(--line); background: var(--paper); box-shadow: 0 5px 12px rgb(67 49 21 / .15); }
+#enemy-kind-options [role="option"] { padding: 10px 12px; cursor: pointer; }
+#enemy-kind-options [aria-selected="true"], #enemy-kind-options [role="option"]:hover { background: var(--clay); color: white; }

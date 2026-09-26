@@ -63,3 +63,13 @@ original contract (participants only).
 Hero `shadow` is clamped to at least `shadowScars` during normalization, including
 save, load and backup restore. Raising scars raises shadow when necessary; lowering
 scars does not lower the existing shadow value. The backup version remains 2.
+
+Enemy forms always create a new record with `source` and `category` set to
+`Własne`. Library category filters exclude own records, including older records
+that retained a template category. Optional enemy `distinctiveFeatures` contains
+free-text distinguishing features, preserved through copies and backups; missing
+values display as empty. `kind` is free text and is displayed with the source.
+
+Enemy `resourceType` is `hate` or `determination`, independent of free-text `kind`.
+Old records default to determination for `Człowiek`, otherwise hate. The numeric
+resource remains in `hate`/`maxHate`; the backup version remains 2.

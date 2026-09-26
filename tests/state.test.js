@@ -163,3 +163,16 @@ test('shadow scars set the shadow floor across saves, reload and restore', () =>
   store.restoreBackup(backup);
   assert.equal(store.getState().heroes[0].shadow,2);
 });
+
+test('enemy resource type survives custom kinds and backups with legacy defaults', () => {
+  const disk = storage();
+  const store = createStore(disk);
+  assert.equal(store.addLibrary({name:'Human',kind:'Człowiek'}).resourceType,'determination');
+  assert.equal(store.addLibrary({name:'Orc',kind:'Ork'}).resourceType,'hate');
+  const custom = store.addLibrary({name:'Custom',kind:'Wędrowiec',resourceType:'determination',hate:5});
+  assert.equal(store.addEnemy(custom).resourceType,'determination');
+  const reloaded = createStore(disk);
+  reloaded.restoreBackup(reloaded.exportBackup());
+  assert.equal(reloaded.getState().battle[0].resourceType,'determination');
+  assert.equal(reloaded.getState().battle[0].hate,5);
+});
