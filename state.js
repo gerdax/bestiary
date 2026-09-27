@@ -70,7 +70,7 @@
 
   function mapShape(raw, participants) {
     if (raw === null) return null;
-    if (!object(raw) || !["forest", "clearing", "ruins", "cave", "forest_clearing", "forest_crossroads", "road", "river_ford", "marsh", "ravine"].includes(raw.scene) || !["small", "medium", "large"].includes(raw.size) || !(typeof raw.seed === "string" || Number.isFinite(raw.seed)) || !Number.isInteger(raw.width) || !Number.isInteger(raw.height) || raw.width < 65 || raw.height < 65 || !Array.isArray(raw.terrain) || !object(raw.positions)) throw new Error("Invalid map");
+    if (!object(raw) || !["forest", "clearing", "ruins", "cave", "forest_clearing", "forest_crossroads", "road", "river", "river_ford", "marsh", "ravine"].includes(raw.scene) || !["small", "medium", "large"].includes(raw.size) || !(typeof raw.seed === "string" || Number.isFinite(raw.seed)) || !Number.isInteger(raw.width) || !Number.isInteger(raw.height) || raw.width < 65 || raw.height < 65 || !Array.isArray(raw.terrain) || !object(raw.positions)) throw new Error("Invalid map");
     const allowed = new Set(participants);
     const positions = {};
     Object.keys(raw.positions).forEach(pid => {

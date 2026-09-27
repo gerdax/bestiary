@@ -441,7 +441,7 @@ label, input, select, textarea { min-width: 0; }
 #library > .section-heading { gap: 16px; flex-wrap: wrap; }
 #library .library-transfer { align-items: center; flex-wrap: wrap; }
 
-#legacy-battle-link { margin-left: auto; color: var(--clay); font-size: 12px; }
+.footer-copyright { margin-left: auto; color: var(--ink); font-size: 12px; }
 
 
 .kind-field { display: grid; gap: 7px; }
@@ -453,7 +453,7 @@ label, input, select, textarea { min-width: 0; }
 #enemy-kind-options [aria-selected="true"], #enemy-kind-options [role="option"]:hover { background: var(--clay); color: white; }
 
 /* Shared appearance for actions presented as text links. */
-:is(.text-button, .library-actions .delete, .map-panel-remove, #legacy-battle-link) {
+:is(.text-button, .library-actions .delete, .map-panel-remove) {
   color: var(--clay);
   background: transparent;
   text-decoration-line: underline;
@@ -461,7 +461,7 @@ label, input, select, textarea { min-width: 0; }
   text-underline-offset: .18em;
   text-decoration-skip-ink: auto;
 }
-:is(.text-button, .library-actions .delete, .map-panel-remove, .map-switch-type, #legacy-battle-link):focus-visible {
+:is(.text-button, .library-actions .delete, .map-panel-remove, .map-switch-type):focus-visible {
   outline: 2px solid var(--clay);
   outline-offset: 3px;
 }

@@ -32,6 +32,10 @@ Interfejs wspólnego stanu opisuje [STATE_API.md](STATE_API.md).
 
 Test gestów mapy: `node tests/map-touch.cjs` (Playwright/Chrome; izolowane dane i zdarzenia dotykowe CDP).
 
-Scenerie map: Las, Polana, Ruiny, Jaskinia, Las z polaną, Leśne rozstaje, Trakt, Rzeka z brodem, Bagna i Skalisty wąwóz. Ścieżki i woda są elementami wizualnymi; nie blokują przesuwania żetonów. Nowe układy powstają po wygenerowaniu mapy — zapisane mapy nie zmieniają się po aktualizacji.
+Scenerie map: Las, Polana, Ruiny, Jaskinia, Las z polaną, Leśne rozstaje, Trakt, Rzeka, Rzeka z brodem, Bagna i Skalisty wąwóz. Ścieżki i woda są elementami wizualnymi; nie blokują przesuwania żetonów. Nowe układy powstają po wygenerowaniu mapy — zapisane mapy nie zmieniają się po aktualizacji.
 
 Test scenerii: `node tests/map-scenes.cjs` (Playwright/Chrome; izolowane dane, generowanie, przeładowanie i przywracanie kopii).
+
+Generowanie losuje również układ scenerii: las bez drogi, ze ścieżką lub traktem; polanę z 1–3 wejściami; rozstaje Y lub X; trakt i wąwóz także po przekątnej; kamieniste brzegi rzeki po jednej lub obu stronach; ruiny z nieregularną zabudową wokół traktu, placu lub długiego muru. Warianty są niezależne i mogą się powtarzać, a to samo ziarno daje identyczny układ.
+
+Ruiny mają nieregularne układy: zabudowę wzdłuż traktu, otwarty plac lub długi mur z przerwami. Budowle różnią się kształtem, rozmiarem i orientacją; przejścia pozostają wolne od gruzu.

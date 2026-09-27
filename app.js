@@ -182,10 +182,6 @@ function openLegacyBattle() {
   window.scrollTo(0, 0);
   return true;
 }
-$("#legacy-battle-link").onclick = event => {
-  event.preventDefault();
-  if (openLegacyBattle() && location.hash !== "#battle") history.pushState(null, "", "#battle");
-};
 window.addEventListener("hashchange", () => {
   if (location.hash === "#battle") openLegacyBattle();
   else if ($("#battle").classList.contains("active")) document.querySelector('[data-tab="heroes"]').click();

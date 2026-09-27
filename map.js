@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const SIZES = { small: [900, 900], medium: [1200, 1200], large: [1600, 1600] };
-  const SCENES = { forest: 'Las', forest_clearing: 'Las z polaną', forest_crossroads: 'Leśne rozstaje', road: 'Trakt', river_ford: 'Rzeka z brodem', marsh: 'Bagna', ravine: 'Skalisty wąwóz', clearing: 'Polana', ruins: 'Ruiny', cave: 'Jaskinia' };
+  const SCENES = { forest: 'Las', forest_clearing: 'Las z polaną', forest_crossroads: 'Leśne rozstaje', road: 'Trakt', river: 'Rzeka', river_ford: 'Rzeka z brodem', marsh: 'Bagna', ravine: 'Skalisty wąwóz', clearing: 'Polana', ruins: 'Ruiny', cave: 'Jaskinia' };
   const SVG = 'http://www.w3.org/2000/svg';
   const STANCES = ['Zapalczywa', 'Wyważona', 'Defensywna', 'Bezpieczna'];
   const polish = new Intl.Collator('pl');
@@ -27,6 +27,7 @@
     size = SIZES[size] ? size : 'medium';
     const [width, height] = SIZES[size], rng = randomFor(seed), terrain = [], features = [];
     const rand = (a, b) => Math.round(a + rng() * (b - a));
+    const pick = count => Math.floor(rng() * count);
     const add = (kind, x, y, r, rotation = 0, variant = 0) => terrain.push({ kind, x: Math.round(x), y: Math.round(y), r: Math.round(r), rotation: Math.round(rotation), variant: Math.round(variant) });
     const addFeature = (kind, featureWidth, points) => {
       const feature = { kind, width: Math.round(featureWidth), points: points.map(([x, y]) => ({ x: clamp(Math.round(x), 0, width - 1), y: clamp(Math.round(y), 0, height - 1) })) };
@@ -38,6 +39,36 @@
       const wiggle = Math.sin(u * Math.PI * 2 + bend) * (axis === 'x' ? height : width) * .075 + Math.sin(u * Math.PI * 4 + bend * .7) * (axis === 'x' ? height : width) * .023;
       return axis === 'x' ? [across, centre + wiggle] : [centre + wiggle, across];
     });
+    const entrance = (side, target, bend) => {
+      const starts = { left: [0, target[1] + height * .09 * Math.sin(bend)], right: [width - 1, target[1] + height * .09 * Math.sin(bend)], top: [target[0] + width * .09 * Math.sin(bend), 0], bottom: [target[0] + width * .09 * Math.sin(bend), height - 1] };
+      const start = starts[side], horizontal = side === 'left' || side === 'right';
+      return Array.from({ length: 5 }, (_, i) => {
+        const t = i / 4, wave = Math.sin(t * Math.PI * 2) * (horizontal ? height : width) * .027;
+        return [start[0] + (target[0] - start[0]) * t + (horizontal ? 0 : wave), start[1] + (target[1] - start[1]) * t + (horizontal ? wave : 0)];
+      });
+    };
+    const radialArm = (target, angle, bend) => {
+      const dx = Math.cos(angle), dy = Math.sin(angle);
+      const edgeX = dx > 0 ? (width - 1 - target[0]) / dx : dx < 0 ? -target[0] / dx : Infinity;
+      const edgeY = dy > 0 ? (height - 1 - target[1]) / dy : dy < 0 ? -target[1] / dy : Infinity;
+      const length = Math.min(edgeX, edgeY);
+      return Array.from({ length: 5 }, (_, i) => {
+        const t = 1 - i / 4, sway = Math.sin(t * Math.PI) * Math.sin(t * Math.PI * 2 + bend) * width * .025;
+        return [target[0] + dx * length * t - dy * sway, target[1] + dy * length * t + dx * sway];
+      });
+    };
+    const windingRoute = (direction, bend) => {
+      if (direction < 2) return route(direction === 0 ? 'x' : 'y', centreFor(direction), bend);
+      const start = direction === 2 ? [0, height * .08] : [width - 1, height * .08];
+      const end = direction === 2 ? [width - 1, height * .92] : [0, height * .92];
+      const sign = direction === 2 ? 1 : -1;
+      return Array.from({ length: 9 }, (_, i) => {
+        const t = i / 8, wave = Math.sin(t * Math.PI * 2 + bend) - Math.sin(bend);
+        const sway = wave * width * .034 * Math.sin(t * Math.PI);
+        return [start[0] + (end[0] - start[0]) * t - sign * sway, start[1] + (end[1] - start[1]) * t + sway];
+      });
+    };
+    const centreFor = direction => (direction === 0 ? height : width) * (.39 + rng() * .22);
     const clearOf = (x, y, r, kinds = ['trail', 'ford']) => features.every(feature => !kinds.includes(feature.kind) || distanceToFeature(x, y, feature) > feature.width / 2 + r + 6);
     const wooded = (target, allow) => {
       for (let i = 0, attempts = 0; i < target && attempts < target * 12; attempts++) {
@@ -49,49 +80,62 @@
       }
     };
     const count = Math.round(width * height / 10500);
-    const newScene = ['forest', 'forest_clearing', 'forest_crossroads', 'road', 'river_ford', 'marsh', 'ravine'].includes(scene);
+    const newScene = ['forest', 'forest_clearing', 'forest_crossroads', 'road', 'river', 'river_ford', 'marsh', 'ravine', 'ruins'].includes(scene);
     if (newScene) {
       const axis = rng() < .5 ? 'x' : 'y', centre = (axis === 'x' ? height : width) * (.39 + rng() * .22), bend = rng() * Math.PI * 2;
       if (scene === 'forest') {
-        addFeature('trail', Math.round(width * .045), route(axis, centre, bend));
+        const trailVariant = pick(3);
+        if (trailVariant) addFeature('trail', Math.round(width * (trailVariant === 1 ? .032 : .075)), route(axis, centre, bend));
         wooded(Math.round(count * 2.6));
       } else if (scene === 'forest_clearing') {
         const cx = width * (.43 + rng() * .14), cy = height * (.43 + rng() * .14);
-        const path = route(axis, axis === 'x' ? cy : cx, bend).slice(0, 5);
-        path[path.length - 1] = [cx, cy];
-        addFeature('trail', Math.round(width * .05), path);
+        const sides = ['left', 'right', 'top', 'bottom'];
+        for (let i = sides.length - 1; i > 0; i--) { const j = pick(i + 1); [sides[i], sides[j]] = [sides[j], sides[i]]; }
+        const entrances = 1 + pick(3);
+        for (const side of sides.slice(0, entrances)) addFeature('trail', Math.round(width * .05), entrance(side, [cx, cy], rng() * Math.PI * 2));
         const rx = width * (.19 + rng() * .04), ry = height * (.17 + rng() * .05);
         wooded(Math.round(count * 2.7), (x, y, r) => Math.hypot((x - cx) / (rx + r), (y - cy) / (ry + r)) > 1);
         for (let i = 0; i < count * .24; i++) add('grass', rand(cx - rx * .7, cx + rx * .7), rand(cy - ry * .7, cy + ry * .7), rand(7, 15), rand(0, 359), rand(0, 3));
       } else if (scene === 'forest_crossroads') {
         const crossX = width * (.42 + rng() * .16), crossY = height * (.42 + rng() * .16);
-        const main = route(axis, axis === 'x' ? crossY : crossX, bend);
-        main[4] = [crossX, crossY];
-        addFeature('trail', Math.round(width * .05), main);
-        const branch = route(axis === 'x' ? 'y' : 'x', axis === 'x' ? crossX : crossY, bend + 1.3);
-        branch[4] = [crossX, crossY];
-        addFeature('trail', Math.round(width * .045), branch);
+        const arms = rng() < .5 ? 3 : 4, rotation = rng() * Math.PI * 2;
+        for (let i = 0; i < arms; i++) addFeature('trail', Math.round(width * .047), radialArm([crossX, crossY], rotation + i * Math.PI * 2 / arms, rng() * Math.PI * 2));
         wooded(Math.round(count * 2.7));
       } else if (scene === 'road') {
-        addFeature('trail', Math.round(width * .11), route(axis, centre, bend));
+        addFeature('trail', Math.round(width * .11), windingRoute(pick(4), bend));
         for (let i = 0; i < count * 1.25; i++) {
           const x = rand(24, width - 24), y = rand(24, height - 24), r = rand(10, 27);
           if (!clearOf(x, y, r + 12)) continue;
           const choice = rng(); add(choice < .43 ? 'grass' : choice < .75 ? 'shrub' : choice < .9 ? 'tree' : 'boulder', x, y, r, rand(0, 359), rand(0, 3));
         }
-      } else if (scene === 'river_ford') {
+      } else if (scene === 'river' || scene === 'river_ford') {
         const river = addFeature('river', Math.round(width * .12), route(axis, centre, bend));
-        const crossing = river.points[4];
-        const other = axis === 'x' ? 'y' : 'x';
-        const approach = route(other, axis === 'x' ? crossing.x : crossing.y, bend + 1.8);
-        approach[4] = [crossing.x, crossing.y];
-        addFeature('trail', Math.round(width * .055), approach.slice(0, 4));
-        addFeature('trail', Math.round(width * .055), approach.slice(5));
-        addFeature('ford', Math.round(width * .075), [approach[3], approach[4], approach[5]]);
+        if (scene === 'river_ford') {
+          const crossing = river.points[4];
+          const other = axis === 'x' ? 'y' : 'x';
+          const approach = route(other, axis === 'x' ? crossing.x : crossing.y, bend + 1.8);
+          approach[4] = [crossing.x, crossing.y];
+          addFeature('trail', Math.round(width * .055), approach.slice(0, 4));
+          addFeature('trail', Math.round(width * .055), approach.slice(5));
+          addFeature('ford', Math.round(width * .075), [approach[3], approach[4], approach[5]]);
+        }
+        const rockVariant = pick(3);
+        const rockSides = rockVariant === 0 ? [rng() < .5 ? -1 : 1] : rockVariant === 1 ? [rng() < .5 ? -1 : 1] : [-1, 1];
+        const rocksPerSide = rockVariant === 0 ? 4 : rockVariant === 1 ? 15 : 11;
+        for (const side of rockSides) {
+          for (let i = 0, attempts = 0; i < rocksPerSide && attempts < rocksPerSide * 20; attempts++) {
+            const base = river.points[rockVariant === 0 ? rand(1, 7) : rand(side < 0 ? 1 : 5, side < 0 ? 3 : 7)];
+            const r = rand(10, 24), distance = river.width / 2 + r + rand(9, 70);
+            const x = axis === 'x' ? base.x + rand(-55, 55) : base.x + side * distance;
+            const y = axis === 'x' ? base.y + side * distance : base.y + rand(-55, 55);
+            if (x < r || x >= width - r || y < r || y >= height - r || distanceToFeature(x, y, river) < river.width / 2 + r + 6 || !clearOf(x, y, r)) continue;
+            add('boulder', x, y, r, rand(0, 359), rand(0, 3)); i++;
+          }
+        }
         for (let i = 0; i < count * 1.2; i++) {
           const x = rand(25, width - 25), y = rand(25, height - 25), r = rand(10, 29);
           if (distanceToFeature(x, y, river) < river.width / 2 + r + 5 || !clearOf(x, y, r)) continue;
-          const choice = rng(); add(choice < .46 ? 'grass' : choice < .77 ? 'shrub' : choice < .91 ? 'tree' : 'boulder', x, y, r, rand(0, 359), rand(0, 3));
+          const choice = rng(); add(choice < .5 ? 'grass' : choice < .84 ? 'shrub' : 'tree', x, y, r, rand(0, 359), rand(0, 3));
         }
       } else if (scene === 'marsh') {
         const clusters = Array.from({ length: 6 }, () => ({ x: rand(width * .15, width * .85), y: rand(height * .15, height * .85) }));
@@ -100,12 +144,99 @@
           const choice = rng(); add(choice < .28 ? 'pool' : choice < .69 ? 'grass' : choice < .94 ? 'shrub' : 'log', x, y, rand(8, 30), rand(0, 359), rand(0, 3));
         }
       } else if (scene === 'ravine') {
-        const corridor = addFeature('trail', Math.round(width * .12), route(axis, centre, bend));
+        const corridor = addFeature('trail', Math.round(width * .12), windingRoute(pick(4), bend));
         for (let i = 0; i < count * 2.6; i++) {
           const x = rand(24, width - 24), y = rand(24, height - 24), r = rand(13, 37);
           const distance = distanceToFeature(x, y, corridor);
           if (distance < corridor.width / 2 + r + 5) continue;
           const choice = rng(); add(choice < .68 ? 'boulder' : choice < .9 ? 'rubble' : 'grass', x, y, r, rand(0, 359), rand(0, 3));
+        }
+      } else if (scene === 'ruins') {
+        const layout = pick(3), plaza = { x: width * (.46 + rng() * .08), y: height * (.46 + rng() * .08), r: width * .175 };
+        let wallHorizontal = false, wallLine = 0;
+        const sites = [];
+        const addWallLine = (a, b, gap = .18) => {
+          const length = Math.hypot(b[0] - a[0], b[1] - a[1]), pieces = Math.max(2, Math.round(length / (width * .045)));
+          const angle = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+          for (let i = 0; i < pieces; i++) {
+            if (rng() < gap) continue;
+            const t = (i + .5) / pieces;
+            add('wall', a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, length / pieces / 3.5, angle, pick(4));
+          }
+        };
+        const addBuilding = (cx, cy, halfX, halfY, angle, form) => {
+          const radians = angle * Math.PI / 180, cos = Math.cos(radians), sin = Math.sin(radians);
+          const at = (x, y) => [cx + x * cos - y * sin, cy + x * sin + y * cos];
+          const corners = [at(-halfX, -halfY), at(halfX, -halfY), at(halfX, halfY), at(-halfX, halfY)];
+          const sides = form === 'L' ? [0, 3] : form === 'U' ? [0, 1, 3] : [0, 1, 2, 3];
+          for (const side of sides) addWallLine(corners[side], corners[(side + 1) % 4], form === 'hall' ? .12 : .22);
+          for (const corner of corners) if (rng() < .8) add('pillar', corner[0], corner[1], rand(10, 18), 0, pick(4));
+          addWallLine(at(-halfX * .25, -halfY * .25), at(-halfX * .25, halfY * .3), .05);
+          if (form !== 'L') addWallLine(at(halfX * .18, halfY * .15), at(halfX * .6, halfY * .15), .05);
+          for (let i = 0; i < 29; i++) {
+            const edge = i < 14, side = pick(4);
+            const x = edge && side < 2 ? (side ? halfX : -halfX) + rand(-16, 16) : rand(-halfX * 1.15, halfX * 1.15);
+            const y = edge && side >= 2 ? (side === 3 ? halfY : -halfY) + rand(-16, 16) : rand(-halfY * 1.15, halfY * 1.15);
+            const point = at(x, y), r = rand(4, i < 9 ? 21 : 11);
+            if (clearOf(point[0], point[1], r) && (layout !== 1 || Math.hypot(point[0] - plaza.x, point[1] - plaza.y) > plaza.r + r)) add('rubble', point[0], point[1], r, rand(0, 359), pick(4));
+          }
+          for (let i = 0; i < 6; i++) {
+            const point = at(rand(-halfX, halfX), rand(-halfY, halfY));
+            if (clearOf(point[0], point[1], 12)) add(i % 3 ? 'grass' : 'shrub', point[0], point[1], rand(6, 12), rand(0, 359), pick(4));
+          }
+          sites.push({ x: cx, y: cy, reach: Math.hypot(halfX, halfY) });
+        };
+        if (layout === 0) addFeature('trail', Math.round(width * .105), windingRoute(pick(4), bend));
+        if (layout === 1) {
+          const horizontal = rng() < .5;
+          for (const side of horizontal ? ['left', 'right'] : ['top', 'bottom']) {
+            const target = horizontal ? [plaza.x + (side === 'left' ? -1 : 1) * plaza.r * .84, plaza.y] : [plaza.x, plaza.y + (side === 'top' ? -1 : 1) * plaza.r * .84];
+            addFeature('trail', Math.round(width * .055), entrance(side, target, rng() * Math.PI * 2));
+          }
+          const halfSpan = plaza.r * .18;
+          addFeature('trail', Math.round(plaza.r * 2), horizontal ? [[plaza.x - halfSpan, plaza.y], [plaza.x + halfSpan, plaza.y]] : [[plaza.x, plaza.y - halfSpan], [plaza.x, plaza.y + halfSpan]]);
+        }
+        if (layout === 2) {
+          wallHorizontal = rng() < .5; wallLine = width * (.43 + rng() * .14);
+          const gateAt = t => wallHorizontal ? [width * t, wallLine] : [wallLine, height * t];
+          for (let i = 0; i < 19; i++) {
+            const t = (i + .5) / 19;
+            if (Math.abs(t - .3) < .07 || Math.abs(t - .7) < .07 || rng() < .11) continue;
+            const point = gateAt(t), wave = Math.sin(t * Math.PI * 3 + bend) * width * .012;
+            add('wall', point[0] + (wallHorizontal ? 0 : wave), point[1] + (wallHorizontal ? wave : 0), width * .016, wallHorizontal ? 0 : 90, pick(4));
+            if (rng() < .7) {
+              const x = point[0] + rand(-24, 24), y = point[1] + rand(-24, 24), r = rand(5, 14);
+              if (features.every(feature => feature.kind !== 'trail' || distanceToFeature(x, y, feature) > feature.width / 2 + r + 6)) add('rubble', x, y, r, rand(0, 359), pick(4));
+            }
+          }
+          for (const t of [.3, .7]) {
+            const point = gateAt(t), span = width * .11;
+            addFeature('trail', Math.round(width * .045), wallHorizontal ? [[point[0], 0], [point[0] + width * .025, point[1] - span], point, [point[0] - width * .025, point[1] + span], [point[0], height - 1]] : [[0, point[1]], [point[0] - span, point[1] + height * .025], point, [point[0] + span, point[1] - height * .025], [width - 1, point[1]]]);
+            for (const side of [-1, 1]) add('pillar', point[0] + (wallHorizontal ? side * width * .065 : 0), point[1] + (wallHorizontal ? 0 : side * height * .065), rand(12, 20), 0, pick(4));
+          }
+        }
+        const target = (size === 'small' ? 4 : size === 'large' ? 8 : 6) + pick(2), formOffset = pick(4);
+        for (let i = 0, attempts = 0; i < target && attempts < target * 80; attempts++) {
+          let cx, cy;
+          if (layout === 1) {
+            const angle = rng() * Math.PI * 2;
+            const radius = width * (.32 + rng() * .07);
+            cx = plaza.x + Math.cos(angle) * radius; cy = plaza.y + Math.sin(angle) * radius;
+          } else { cx = rand(width * .14, width * .86); cy = rand(height * .14, height * .86); }
+          const form = ['rectangle', 'L', 'U', 'hall'][(i + formOffset) % 4];
+          const halfX = width * (form === 'hall' ? .087 + rng() * .025 : .052 + rng() * .023);
+          const halfY = height * (form === 'hall' ? .037 + rng() * .012 : .052 + rng() * .02);
+          const reach = Math.hypot(halfX, halfY);
+          if (cx - reach < 20 || cy - reach < 20 || cx + reach >= width - 20 || cy + reach >= height - 20) continue;
+          if (layout === 1 && Math.hypot(cx - plaza.x, cy - plaza.y) < plaza.r + reach + 18) continue;
+          if (layout === 2 && Math.abs((wallHorizontal ? cy : cx) - wallLine) < reach + width * .045) continue;
+          if (!clearOf(cx, cy, reach + 14) || sites.some(site => Math.hypot(cx - site.x, cy - site.y) < reach + site.reach + width * .025)) continue;
+          addBuilding(cx, cy, halfX, halfY, pick(4) * 90 + rand(-15, 15), form); i++;
+        }
+        for (let i = 0; i < count * .62; i++) {
+          const x = rand(25, width - 25), y = rand(25, height - 25), r = rand(5, 17);
+          if (!clearOf(x, y, r) || (layout === 1 && Math.hypot(x - plaza.x, y - plaza.y) < plaza.r + r)) continue;
+          add(rng() < .68 ? 'rubble' : 'grass', x, y, r, rand(0, 359), pick(4));
         }
       }
       return { scene, size, seed: String(seed), width, height, terrain, features, positions: {} };
@@ -167,12 +298,15 @@
     terrainSvg.setAttribute('viewBox', `0 0 ${map.width} ${map.height}`);
     terrainSvg.setAttribute('width', map.width); terrainSvg.setAttribute('height', map.height);
     const scene = SCENES[map.scene] ? map.scene : 'clearing';
-    svg('rect', { width: map.width, height: map.height, fill: { forest: '#a2aa80', forest_clearing: '#a2aa80', forest_crossroads: '#a2aa80', road: '#aaad87', river_ford: '#a7ae89', marsh: '#899b7d', ravine: '#9b9986', clearing: '#b9bd91', ruins: '#afa997', cave: '#777a71' }[scene] }, terrainSvg);
+    svg('rect', { width: map.width, height: map.height, fill: { forest: '#a2aa80', forest_clearing: '#a2aa80', forest_crossroads: '#a2aa80', road: '#aaad87', river: '#a7ae89', river_ford: '#a7ae89', marsh: '#899b7d', ravine: '#9b9986', clearing: '#b9bd91', ruins: '#afa997', cave: '#777a71' }[scene] }, terrainSvg);
     const rng = randomFor(map.seed + '-ground');
     for (let i = 0; i < Math.round(map.width * map.height / 4500); i++) {
       svg('ellipse', { cx: Math.round(rng() * map.width), cy: Math.round(rng() * map.height), rx: Math.round(12 + rng() * 55), ry: Math.round(5 + rng() * 22), fill: scene === 'cave' ? '#8e8e7c' : '#ddd1a2', opacity: scene === 'ruins' ? .12 : .16, transform: `rotate(${Math.round(rng() * 180)} ${Math.round(rng() * map.width)} ${Math.round(rng() * map.height)})` }, terrainSvg);
     }
     const features = Array.isArray(map.features) ? map.features : [];
+    const trailCount = features.filter(feature => feature && feature.kind === 'trail').length;
+    const joinedCrossroads = (scene === 'forest_crossroads' && trailCount >= 3) || (scene === 'ruins' && trailCount >= 2);
+    const joinedTrailFills = [];
     for (const kind of ['river', 'trail', 'ford']) {
       for (const feature of features) {
         if (!feature || feature.kind !== kind || !Array.isArray(feature.points) || feature.points.length < 2 || !Number.isFinite(feature.width)) continue;
@@ -192,11 +326,13 @@
         } else {
           const road = scene === 'road', rock = scene === 'ravine';
           svg('path', { ...base, class: className, stroke: road ? '#8d8265' : rock ? '#797667' : '#80795e', 'stroke-width': feature.width + (road ? 17 : 10) }, terrainSvg);
-          svg('path', { ...base, stroke: road ? '#c8b88b' : rock ? '#b4ae94' : '#b5a77e', 'stroke-width': feature.width }, terrainSvg);
+          if (joinedCrossroads) joinedTrailFills.push({ ...base, stroke: '#b5a77e', 'stroke-width': feature.width });
+          else svg('path', { ...base, stroke: road ? '#c8b88b' : rock ? '#b4ae94' : '#b5a77e', 'stroke-width': feature.width }, terrainSvg);
           if (road) svg('path', { ...base, stroke: '#e0cf9c', 'stroke-width': Math.max(3, feature.width * .09), opacity: .6 }, terrainSvg);
         }
       }
     }
+    for (const attrs of joinedTrailFills) svg('path', attrs, terrainSvg);
     map.terrain.forEach(record => shape(record, terrainSvg));
     svg('rect', { x: 3, y: 3, width: map.width - 6, height: map.height - 6, fill: 'none', stroke: '#4f493a', 'stroke-width': 6, opacity: .55 }, terrainSvg);
   }
@@ -397,7 +533,7 @@
     if (root.confirm('Wyczyścić potyczkę? Mapa i wszyscy uczestnicy zostaną usunięci z potyczki. Arkusze bohaterów i biblioteka pozostaną zachowane.')) run(() => store.clearEncounter());
   });
   generateButton.addEventListener('click', () => {
-    if (currentMap && !root.confirm('Wygenerować nową mapę? Rozstawienie znaczników zostanie wyzerowane.')) return;
+    if (currentMap && store.getParticipants().length > 0 && !root.confirm('Wygenerować nową mapę? Rozstawienie znaczników zostanie wyzerowane.')) return;
     const seed = root.crypto && root.crypto.getRandomValues ? root.crypto.getRandomValues(new Uint32Array(2)).join('-') : String(Date.now()) + '-' + Math.random();
     run(() => store.setMap(generateTerrain(sceneInput.value, sizeInput.value, seed)));
   });

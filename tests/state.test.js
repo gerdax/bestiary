@@ -263,7 +263,7 @@ test('unchecking hero wound clears injury atomically and rejects unwounded text'
 
 test('connected scene features persist through save, reload and backup without affecting old maps', () => {
   const disk=storage(), store=createStore(disk);
-  const scenes=['forest_clearing','forest_crossroads','road','river_ford','marsh','ravine'];
+  const scenes=['forest_clearing','forest_crossroads','road','river','river_ford','marsh','ravine'];
   for(const scene of scenes) {
     const map={scene,size:'small',seed:'features',width:900,height:900,terrain:[],positions:{},features:[{kind:'trail',width:50,points:[{x:0,y:300},{x:899,y:450}]}]};
     store.setMap(map);
