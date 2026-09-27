@@ -10,6 +10,7 @@ W katalogu projektu uruchom `python3 -m http.server 8765`, następnie otwórz ht
 
 - W zakładce **Bohaterowie** utwórz i edytuj arkusze; dodawaj bohaterów do potyczki na mapie.
 - Przeciwników dodawaj z generatora lub biblioteki. Każdy uczestnik otrzymuje żeton po wygenerowaniu mapy.
+- Na ekranie dotykowym przesuwaj mapę dwoma palcami, a gestem szczypania zmieniaj powiększenie. Jeden palec służy do wybierania i przeciągania żetonów.
 - W zakładce **Potyczka** wybierz scenerię i rozmiar, a następnie wygeneruj teren. Przeciągaj żetony oraz tło planszy; używaj przybliżania i dopasowania widoku.
 - Zmiany zasobów bohaterów pozostają na arkuszach po zakończeniu starcia. Teren nie wpływa automatycznie na zasady gry.
 - „Wyczyść potyczkę” w zakładce **Potyczka** usuwa mapę i uczestników, zachowując arkusze bohaterów oraz bibliotekę. Widok **Aktywna walka** jest tymczasowo wyłączony.
@@ -28,3 +29,5 @@ Test pełnego arkusza i układu responsywnego: `node tests/hero-sheet.cjs` (te s
 Test panelu bohatera na mapie: `node tests/map-hero-panel.cjs` (Playwright/Chrome; izolowane dane). Sprawdza współdzielone zasoby i stany oraz nawigację po bohaterach według postawy i po przeciwnikach alfabetycznie.
 
 Interfejs wspólnego stanu opisuje [STATE_API.md](STATE_API.md).
+
+Test gestów mapy: `node tests/map-touch.cjs` (Playwright/Chrome; izolowane dane i zdarzenia dotykowe CDP).

@@ -82,10 +82,16 @@
     });
     fields.forEach(name => { const control = form.elements[name]; if (!control) return; if (booleans.has(name)) control.checked = !!value(name); else control.value = value(name); });
     form.elements.shadow.min = String(hero ? hero.shadowScars : 0);
+    syncInjury(form, hero);
     form.elements.name.required = true;
     form.elements.name.maxLength = 80;
     if (hero && !embedded) { const actions = form.querySelector(".hero-editor-actions"), footer = form.querySelector(".hero-editor-footer-actions"), inBattle = store.getState().heroParticipants.some(p => p.heroId === hero.id); const battle = el("button", "text-button", inBattle ? "Usuń z potyczki" : "Dodaj do potyczki"); battle.type = "button"; battle.dataset.heroAction = "battle"; battle.dataset.id = hero.id;  actions.append(battle); const remove = el("button", "text-button danger", "Usuń bohatera"); remove.type = "button"; remove.dataset.heroAction = "delete"; remove.dataset.id = hero.id; footer.append(remove); }
     if (!embedded) { draftDirty = false; dirtyFields.clear(); }
+  }
+  function syncInjury(editor, hero, dirty) {
+    const injury = editor.elements.injury;
+    injury.disabled = !hero?.wounded;
+    if (injury.disabled) { injury.value = ""; if (dirty) dirty.delete("injury"); }
   }
   // Each cached sheet keeps its draft; disclosures reset when selection changes.
   // The same renderer serves both views; only saved fields go through the shared store.
@@ -110,10 +116,11 @@
             const sync = () => {
               const current = heroById(id);
               if (!current) return;
+              syncInjury(editor, current, dirty);
               editor.elements.shadow.min = String(current.shadowScars);
               fields.forEach(name => {
                 const control = editor.elements[name];
-                if (!control || dirty.has(name)) return;
+                if (!control || dirty.has(name) || (name === "injury" && !current.wounded)) return;
                 if (booleans.has(name)) control.checked = !!current[name];
                 else {
                   const value = String(current[name] ?? (numeric.has(name) ? 0 : ""));
@@ -170,8 +177,10 @@
     if (!editingId) return;
     const hero = heroById(editingId);
     if (!hero) { editingId = null; draftDirty = false; dirtyFields.clear(); return; }
+    syncInjury(form, hero, dirtyFields);
+    draftDirty = dirtyFields.size > 0;
     form.elements.shadow.min = String(hero.shadowScars);
-    fields.forEach(name => { const control = form.elements[name]; if (!control || dirtyFields.has(name)) return; if (booleans.has(name)) { control.checked = !!hero[name]; return; } const next = hero[name] == null ? (numeric.has(name) ? "0" : "") : String(hero[name]); if (control.value !== next) control.value = next; });
+    fields.forEach(name => { const control = form.elements[name]; if (!control || dirtyFields.has(name) || (name === "injury" && !hero.wounded)) return; if (booleans.has(name)) { control.checked = !!hero[name]; return; } const next = hero[name] == null ? (numeric.has(name) ? "0" : "") : String(hero[name]); if (control.value !== next) control.value = next; });
   }
   function renderList() {
     const state = store.getState(), ids = new Set(state.heroes.map(hero => hero.id));

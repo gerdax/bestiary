@@ -248,3 +248,15 @@ test('setEnemyWound rejects invalid values and cannot alter a hero', () => {
   assert.deepEqual(store.getState().heroes, before.heroes);
   assert.equal(store.getState().heroes[0].wounded, true);
 });
+
+test('unchecking hero wound clears injury atomically and rejects unwounded text', () => {
+  const disk = storage(), store = createStore(disk);
+  const hero = store.saveHero({name:'Frodo',wounded:true,injury:'Ciężka'});
+  store.saveHero({id:hero.id,wounded:false});
+  assert.equal(store.getState().heroes[0].injury,'');
+  store.saveHero({id:hero.id,injury:'Stale draft'});
+  assert.equal(store.getState().heroes[0].injury,'');
+  store.saveHero({id:hero.id,wounded:true});
+  assert.equal(store.getState().heroes[0].injury,'');
+  assert.equal(createStore(disk).getState().heroes[0].injury,'');
+});

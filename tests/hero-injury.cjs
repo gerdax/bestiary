@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});try{
+const page=await browser.newPage();await page.goto(process.env.BASE_URL || 'http://127.0.0.1:8765');
+const id=await page.evaluate(()=>{const h=OneRingStore.saveHero({name:'Frodo'});OneRingStore.addHero(h.id);OneRingStore.setMap(OneRingMap.generateTerrain('clearing','medium','injury'));return h.id});
+const team=page.locator('#hero-editor');
+await team.locator('details').first().evaluate(n=>n.open=true);
+assert.equal(await team.locator('[name="injury"]').isDisabled(),true);
+await team.locator('[name="wounded"]').check();
+await team.locator('[name="injury"]').fill('Ciężka rana');await team.locator('[name="injury"]').press('Tab');
+await page.locator('[data-tab="map"]').click();await page.evaluate(id=>OneRingMap.selectParticipant('hero:'+id),id);
+const panel=page.locator('#map-panel');assert.equal(await panel.locator('[name="injury"]').inputValue(),'Ciężka rana');
+await panel.locator('[name="wounded"]').uncheck();assert.equal(await panel.locator('[name="injury"]').isDisabled(),true);assert.equal(await panel.locator('[name="injury"]').inputValue(),'');
+await panel.locator('[name="wounded"]').check();assert.equal(await panel.locator('[name="injury"]').inputValue(),'');
+await panel.locator('[name="injury"]').fill('Lekka');
+const embedded=page.locator('#map-hero-sheet form');await embedded.locator('details').first().evaluate(n=>n.open=true);
+assert.equal(await embedded.locator('[name="injury"]').inputValue(),'Lekka');
+await embedded.locator('[name="wounded"]').uncheck();assert.equal(await panel.locator('[name="injury"]').isDisabled(),true);assert.equal(await embedded.locator('[name="injury"]').inputValue(),'');
+await page.locator('[data-tab="heroes"]').click();assert.equal(await team.locator('[name="injury"]').isDisabled(),true);assert.equal(await team.locator('[name="injury"]').inputValue(),'');
+await page.reload();assert.equal(await page.locator('#hero-editor [name="injury"]').isDisabled(),true);
+assert.equal(await page.evaluate(()=>OneRingStore.getState().heroes[0].injury),'');
+console.log('Hero injury gating and clearing passed across team, map panel, embedded sheet and reload.');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

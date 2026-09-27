@@ -2,7 +2,7 @@
 #map .section-heading { gap: 24px; }
 #map .section-heading .eyebrow { margin: 0 0 5px; }
 .map-heading-note { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 3px; text-align: right; }
-.map-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; padding: 16px; margin-bottom: 14px; border-top: 2px solid var(--clay); }
+.map-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; padding: 16px; margin-bottom: 14px; border: 1px solid var(--clay); border-top-width: 3px; border-bottom: 0; border-radius: 9px 9px 0 0; }
 .map-toolbar label { min-width: 140px; flex: 1 1 140px; font-size: 12px; }
 .map-toolbar select { padding: 9px 10px; }
 .map-toolbar .primary { min-height: 40px; background: var(--clay); white-space: nowrap; }
@@ -108,3 +108,5 @@
 .map-panel-heading .map-switch-type { width: auto; height: auto; min-height: 32px; padding: 0; border: 0; background: transparent; text-align: left; font: 500 11px 'DM Mono', monospace; letter-spacing: .08em; }
 
 .map-panel-heading .map-switch-type:disabled { opacity: 1; color: var(--clay); }
+
+.map-panel input[name="injury"]:disabled { opacity: .55; background: #e8e5df; cursor: not-allowed; }

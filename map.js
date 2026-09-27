@@ -43,6 +43,8 @@
   const doc = root.document, store = root.OneRingStore, section = doc.getElementById('map');
   if (!section || !store) return;
   let currentMap = null, selected = null, zoom = 1, offsetX = 0, offsetY = 0, fittedKey = '', gesture = null;
+  const touchPoints = new Map();
+  let touchLocked = false, touchGesture = null, suppressTouchClick = false;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
   section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
@@ -211,7 +213,7 @@
         wrapper.append(input, doc.createTextNode(label)); conditions.appendChild(wrapper);
       }
       const injuryLabel = el('label', 'map-panel-injury', 'Stopień rany'), injury = el('input');
-      injury.type = 'text'; injury.name = 'injury'; injury.value = person.injury || '';
+      injury.type = 'text'; injury.name = 'injury'; injury.disabled = !person.wounded; injury.value = person.wounded ? person.injury || '' : '';
       injury.addEventListener('input', event => { if (!event.isComposing) saveHeroField(person, injury, 'injury', injury.value); });
       injury.addEventListener('compositionend', () => saveHeroField(person, injury, 'injury', injury.value));
       injuryLabel.appendChild(injury); panel.append(conditions, injuryLabel);
@@ -255,6 +257,7 @@
     if (selected && !participants.some(p => p.id === selected)) selected = null;
     const key = map ? JSON.stringify([map.seed, map.scene, map.size, map.width, map.height, map.terrain]) : '';
     const terrainChanged = key !== fittedKey;
+    if (terrainChanged) { gesture = null; touchPoints.clear(); touchGesture = null; touchLocked = false; }
     currentMap = map;
     blank.hidden = !!map; stage.hidden = !map;
     generateButton.textContent = 'Wygeneruj mapę'; generateButton.disabled = !!store.loadError;
@@ -294,27 +297,89 @@
     transform();
   });
   viewport.addEventListener('wheel', event => { if (!currentMap) return; event.preventDefault(); const box = viewport.getBoundingClientRect(); const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1); zoomAt(Math.exp(-clamp(pixels, -100, 100) * .0099), event.clientX - box.left, event.clientY - box.top); }, { passive: false });
+  function restoreTokenDrag() {
+    if (gesture && gesture.type === 'token') {
+      gesture.node.style.left = gesture.x + 'px';
+      gesture.node.style.top = gesture.y + 'px';
+      selected = gesture.previousSelection;
+      renderPanel(store.getParticipants());
+      tokens.querySelectorAll('.map-token').forEach(node => node.classList.toggle('is-selected', node.dataset.id === selected));
+    }
+    gesture = null;
+  }
+  function startTouchGesture() {
+    restoreTokenDrag();
+    touchLocked = true;
+    suppressTouchClick = true;
+    const [a, b] = Array.from(touchPoints.entries());
+    const box = viewport.getBoundingClientRect();
+    const midpointX = (a[1].x + b[1].x) / 2 - box.left - viewport.clientLeft;
+    const midpointY = (a[1].y + b[1].y) / 2 - box.top - viewport.clientTop;
+    touchGesture = { ids: [a[0], b[0]], distance: Math.max(1, Math.hypot(a[1].x - b[1].x, a[1].y - b[1].y)), zoom, mapX: (midpointX - offsetX) / zoom, mapY: (midpointY - offsetY) / zoom };
+  }
   viewport.addEventListener('pointerdown', event => {
-    if (!currentMap || gesture || event.button !== 0 || event.target.closest('.map-zoom-controls')) return;
+    if (!currentMap || event.button !== 0 || event.target.closest('.map-zoom-controls')) return;
+    if (event.pointerType === 'touch') {
+      if (!touchPoints.size) suppressTouchClick = false;
+      touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      viewport.setPointerCapture(event.pointerId);
+      if (touchPoints.size === 2 && !touchLocked) startTouchGesture();
+      if (touchPoints.size > 2) { touchLocked = true; suppressTouchClick = true; touchGesture = null; }
+      event.preventDefault();
+      if (touchLocked || !event.isPrimary) return;
+    }
+    if (gesture || touchLocked) return;
     const marker = event.target.closest('.map-token');
     if (marker) {
       marker.focus();
+      const previousSelection = selected;
       selected = marker.dataset.id; renderPanel(store.getParticipants()); tokens.querySelectorAll('.map-token').forEach(n => n.classList.toggle('is-selected', n.dataset.id === selected));
-      const pos = currentMap.positions[selected]; gesture = { type: 'token', id: selected, node: marker, startX: event.clientX, startY: event.clientY, x: pos.x, y: pos.y };
-    } else gesture = { type: 'pan', startX: event.clientX, startY: event.clientY, x: offsetX, y: offsetY };
+      const pos = currentMap.positions[selected]; gesture = { type: 'token', id: selected, node: marker, previousSelection, startX: event.clientX, startY: event.clientY, x: pos.x, y: pos.y };
+    } else if (event.pointerType !== 'touch') gesture = { type: 'pan', startX: event.clientX, startY: event.clientY, x: offsetX, y: offsetY };
+    if (!gesture) return;
     gesture.pointerId = event.pointerId;
     viewport.setPointerCapture(event.pointerId); event.preventDefault();
   });
   viewport.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch' && touchPoints.has(event.pointerId)) {
+      touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touchGesture && currentMap) {
+        const [a, b] = touchGesture.ids.map(id => touchPoints.get(id));
+        if (a && b) {
+          const box = viewport.getBoundingClientRect();
+          const nextZoom = clamp(touchGesture.zoom * Math.hypot(a.x - b.x, a.y - b.y) / touchGesture.distance, .1, 3);
+          offsetX = (a.x + b.x) / 2 - box.left - viewport.clientLeft - touchGesture.mapX * nextZoom;
+          offsetY = (a.y + b.y) / 2 - box.top - viewport.clientTop - touchGesture.mapY * nextZoom;
+          zoom = nextZoom;
+          transform();
+        }
+      }
+      if (touchLocked) return;
+    }
     if (!gesture || event.pointerId !== gesture.pointerId || !currentMap) return;
     if (gesture.type === 'pan') { offsetX = gesture.x + event.clientX - gesture.startX; offsetY = gesture.y + event.clientY - gesture.startY; transform(); }
     else { const x = clamp(Math.round(gesture.x + (event.clientX - gesture.startX) / zoom), 0, currentMap.width - 1), y = clamp(Math.round(gesture.y + (event.clientY - gesture.startY) / zoom), 0, currentMap.height - 1); gesture.node.style.left = clamp(x, 30, currentMap.width - 30) + 'px'; gesture.node.style.top = clamp(y, 30, currentMap.height - 30) + 'px'; gesture.nextX = x; gesture.nextY = y; }
   });
-  function finishGesture(event) { if (!gesture || event.pointerId !== gesture.pointerId) return; const done = gesture; gesture = null; if (event.type === 'pointercancel') { if (currentMap) renderTokens(currentMap, store.getParticipants()); return; } if (done.type === 'token' && Number.isFinite(done.nextX)) run(() => store.moveToken(done.id, done.nextX, done.nextY)); }
-  viewport.addEventListener('pointerup', finishGesture); viewport.addEventListener('pointercancel', finishGesture);
+  function finishGesture(event) {
+    if (event.pointerType === 'touch' && touchPoints.has(event.pointerId)) {
+      touchPoints.delete(event.pointerId);
+      if (touchLocked) {
+        touchGesture = null;
+        if (!touchPoints.size) touchLocked = false;
+        return;
+      }
+    }
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    const done = gesture; gesture = null;
+    if (event.type !== 'pointerup') { if (done.type === 'token') restoreTokenNode(done); return; }
+    if (done.type === 'token' && Number.isFinite(done.nextX)) run(() => store.moveToken(done.id, done.nextX, done.nextY));
+  }
+  function restoreTokenNode(done) { done.node.style.left = done.x + 'px'; done.node.style.top = done.y + 'px'; }
+  viewport.addEventListener('pointerup', finishGesture); viewport.addEventListener('pointercancel', finishGesture); viewport.addEventListener('lostpointercapture', finishGesture);
+  viewport.addEventListener('click', event => { if (suppressTouchClick && event.pointerType === 'touch') { event.preventDefault(); event.stopPropagation(); } }, true);
   tokens.addEventListener('click', event => { const marker = event.target.closest('.map-token'); if (!marker) return; selected = marker.dataset.id; renderTokens(currentMap, store.getParticipants()); renderPanel(store.getParticipants()); const next = Array.from(tokens.children).find(n => n.dataset.id === selected); if (next) next.focus(); });
   tokens.addEventListener('keydown', event => { const marker = event.target.closest('.map-token'); if (!marker || !currentMap) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selected = marker.dataset.id; renderTokens(currentMap, store.getParticipants()); renderPanel(store.getParticipants()); const next = Array.from(tokens.children).find(n => n.dataset.id === selected); if (next) next.focus(); return; } const vectors = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }; const d = vectors[event.key]; if (!d) return; event.preventDefault(); selected = marker.dataset.id; const pos = currentMap.positions[selected], step = event.shiftKey ? 20 : 5; run(() => store.moveToken(selected, pos.x + d[0] * step, pos.y + d[1] * step)); const next = Array.from(tokens.children).find(n => n.dataset.id === selected); if (next) next.focus(); });
-  if (root.ResizeObserver) new root.ResizeObserver(() => { if (currentMap && section.classList.contains('active') && viewport.clientWidth && viewport.clientHeight && !gesture) fit(); }).observe(viewport);
+  if (root.ResizeObserver) new root.ResizeObserver(() => { if (currentMap && section.classList.contains('active') && viewport.clientWidth && viewport.clientHeight && !gesture && !touchPoints.size) fit(); }).observe(viewport);
   doc.addEventListener('one-ring:tab', event => { if (event.detail === 'map' || event.detail && event.detail.tab === 'map') root.requestAnimationFrame(() => { if (currentMap && viewport.clientWidth) fit(); }); });
   store.subscribe(refresh); refresh(store.getState());
   function selectParticipant(id) {

@@ -84,3 +84,7 @@ Checking the last unchecked wound sets `defeated` to true in the same state upda
 Unchecking a wound never revives the enemy. `toggleDefeated` changes only `defeated`,
 so a manually revived enemy can retain all checked wounds through reload and backup
 restore; checking an already checked wound does not defeat it again.
+
+Explicit `saveHero({id, wounded:false})` clears `injury` atomically. Injury writes
+while unwounded are cleared; unrelated saves and loading legacy data preserve
+existing injury text. Editors disable and blank the injury field while unwounded.

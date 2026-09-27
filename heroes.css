@@ -134,3 +134,5 @@
 
 .map-hero-sheet { margin-top: 24px; }
 .map-hero-sheet[hidden] { display: none; }
+
+.hero-editor input[name="injury"]:disabled { opacity: .55; background: #e8e5df; cursor: not-allowed; }
