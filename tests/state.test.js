@@ -288,3 +288,18 @@ test('malformed connected features are rejected without changing saved state', (
     assert.equal(disk.data['one-ring-state'],saved);
   }
 });
+
+test('enemy notes survive library, encounter, clone, reload and backup', () => {
+  const disk = storage(), store = createStore(disk);
+  const notes = 'Pierwszy wiersz\n<img src=x onerror=alert(1)>\nOstatni wiersz';
+  const template = store.addLibrary({ name: 'Strażnik', notes });
+  const participant = store.addEnemy(template);
+  const clone = store.addEnemy(participant);
+  assert.equal(clone.notes, notes);
+  assert.equal(createStore(disk).getState().library[0].notes, notes);
+  const restored = createStore(storage()); restored.restoreBackup(store.exportBackup());
+  assert.equal(restored.getState().battle[0].notes, notes);
+  assert.equal(store.importLibrary([{...template, notes:'Inne notatki'}]), 1);
+  assert.equal(store.importLibrary([{...template, notes:'Inne notatki'}]), 0);
+  assert.equal(store.addEnemy({name:'Bez notatek'}).notes, '');
+});

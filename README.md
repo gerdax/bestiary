@@ -39,3 +39,5 @@ Test scenerii: `node tests/map-scenes.cjs` (Playwright/Chrome; izolowane dane, g
 Generowanie losuje również układ scenerii: las bez drogi, ze ścieżką lub traktem; polanę z 1–3 wejściami; rozstaje Y lub X; trakt i wąwóz także po przekątnej; kamieniste brzegi rzeki po jednej lub obu stronach; ruiny z nieregularną zabudową wokół traktu, placu lub długiego muru. Warianty są niezależne i mogą się powtarzać, a to samo ziarno daje identyczny układ.
 
 Ruiny mają nieregularne układy: zabudowę wzdłuż traktu, otwarty plac lub długi mur z przerwami. Budowle różnią się kształtem, rozmiarem i orientacją; przejścia pozostają wolne od gruzu.
+
+Przycisk w prawym górnym rogu mapy rozwija ją na całe okno; ponowne kliknięcie lub Escape przywraca zwykły widok. Test: `node tests/map-fullscreen.cjs` (izolowany Playwright/Chrome, komputer i telefon).

@@ -91,11 +91,13 @@
 .map-enemy-wounds input:disabled { opacity: .6; filter: grayscale(1); cursor: not-allowed; }
 
 .map-enemy-features { margin: 8px 0 0; color: var(--muted); font: 13px Georgia, serif; }
-.map-enemy-details { --sheet-red: var(--clay); margin: 24px 0 0; padding: 26px; background: #fffdf8; border-top: 1px solid var(--sheet-red); box-shadow: 0 4px 18px rgb(93 75 59 / .06); }
-.map-enemy-details:not([open]) { margin-bottom: 0; }
-.map-enemy-details > summary { padding: 0; display: flex; align-items: center; }
-@media (max-width: 760px) { .map-enemy-details { padding: 18px; } }
-.map-enemy-details[hidden] { display: none; }
+/* Match the shared paper and stacked disclosures of the hero sheet. */
+.map-enemy-sheet { --sheet-red: var(--clay); display: grid; gap: 16px; margin-top: 24px; padding: 24px; background: #fffdf8; border-top: 1px solid var(--sheet-red); box-shadow: 0 4px 18px rgb(93 75 59 / .06); }
+.map-enemy-sheet[hidden], .map-enemy-details[hidden] { display: none; }
+.map-enemy-details { margin: 0; }
+.map-enemy-details:first-child { border-top: 0; }
+.map-enemy-details:not([open]) { margin-bottom: -12px; }
+@media (max-width: 760px) { .map-enemy-sheet { padding: 18px; } }
 .map-enemy-detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 12px 0; }
 .map-enemy-detail-body h3 { margin: 0; color: var(--clay); font: 600 18px Fraunces, Georgia, serif; }
 .map-enemy-detail-body .map-panel-detail { font-size: 15px; }
@@ -110,3 +112,9 @@
 .map-panel-heading .map-switch-type:disabled { opacity: 1; color: var(--clay); }
 
 .map-panel input[name="injury"]:disabled { opacity: .55; background: #e8e5df; cursor: not-allowed; }
+
+.map-fullscreen-controls { top: 12px; right: 12px; bottom: auto; }
+.map-fullscreen-controls button { display: grid; place-items: center; width: 40px; height: 40px; }
+.map-viewport.is-fullscreen { position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100%; height: 100dvh; min-height: 0; max-height: none; box-sizing: border-box; }
+.map-viewport.is-fullscreen .map-fullscreen-controls { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
+#map-enemy-notes > .map-panel-detail { padding-top: 12px; font-size: 15px; white-space: pre-wrap; }

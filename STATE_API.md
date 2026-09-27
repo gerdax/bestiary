@@ -97,3 +97,5 @@ at most 64 features, with 2–64 integer points each, within map bounds. Feature
 are visual terrain only; they impose no movement rules. Legacy maps without
 features remain unchanged; backups still use version 2. New generation affects
 only explicitly regenerated maps, never existing terrain or token positions.
+
+Enemy records include plain-text `notes` (empty by default for legacy entries). Notes are copied with library templates into encounters and clones, preserved in backups, and included when detecting duplicate library imports. Map notes are read-only snapshots of the added enemy, like its other template fields.

@@ -1,5 +1,5 @@
-const CACHE_NAME="bestiariusz-v69";
-const APP_SHELL=["./","./index.html","./style.css","./overrides.css?v=69","./app.js?v=69","./state.js?v=65","./heroes.js?v=63","./heroes.css?v=63","./map.js?v=68","./map.css?v=63","./vendor/Sortable.min.js","./manifest.webmanifest","./icons/icon.svg"];
+const CACHE_NAME="bestiariusz-v73";
+const APP_SHELL=["./","./index.html","./style.css","./overrides.css?v=69","./app.js?v=72","./state.js?v=72","./heroes.js?v=63","./heroes.css?v=63","./map.js?v=73","./map.css?v=73","./vendor/Sortable.min.js","./manifest.webmanifest","./icons/icon.svg"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{

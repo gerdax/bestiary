@@ -31,6 +31,7 @@
     const maxHate = Math.max(0, number(raw.maxHate, number(raw.hate, 0)));
     const result = Object.assign({}, raw, {
       id: typeof raw.id === "string" && raw.id ? raw.id : id(), kind,
+      notes: typeof raw.notes === "string" ? raw.notes : "",
       resourceType: ["hate", "determination"].includes(raw.resourceType) ? raw.resourceType : (kind === "Człowiek" ? "determination" : "hate"),
       category: raw.category || CATEGORIES[kind] || "Własne", source: raw.source === "Mój szablon" ? "Własne" : (raw.source || "Własne"),
       fierceness: number(raw.fierceness, 3), might: number(raw.might, 1), maxEndurance, maxHate,
@@ -181,7 +182,7 @@
       moveToken(pid, x, y) { return mutate(() => { if (!state.map || !participantIds().has(pid) || !Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) return; state.map.positions[pid] = { x: clamp(Math.round(Number(x)), 32, state.map.width - 33), y: clamp(Math.round(Number(y)), 32, state.map.height - 33) }; }); },
       addLibrary(raw) { return mutate(() => { const e = enemy(raw, false); if (state.library.some(x => x.id === e.id)) e.id = id(); state.library.push(e); return copy(e); }); },
       removeLibrary(libraryId) { return mutate(() => { state.library = state.library.filter(x => x.id !== libraryId); }); },
-      importLibrary(data) { return mutate(() => { const entries = Array.isArray(data) ? data : data && data.library; if (!Array.isArray(entries)) throw new Error("Invalid library import"); let added = 0; entries.forEach(raw => { if (!object(raw) || !String(raw.name || "").trim()) return; const e = enemy(raw, false); e.source = "Własne"; const duplicate = state.library.some(x => x.name === e.name && x.kind === e.kind && x.maxEndurance === e.maxEndurance && x.maxHate === e.maxHate && x.attack === e.attack && x.traits === e.traits); if (!duplicate) { if (state.library.some(x => x.id === e.id)) e.id = id(); state.library.push(e); added++; } }); return added; }); },
+      importLibrary(data) { return mutate(() => { const entries = Array.isArray(data) ? data : data && data.library; if (!Array.isArray(entries)) throw new Error("Invalid library import"); let added = 0; entries.forEach(raw => { if (!object(raw) || !String(raw.name || "").trim()) return; const e = enemy(raw, false); e.source = "Własne"; const duplicate = state.library.some(x => x.name === e.name && x.kind === e.kind && x.maxEndurance === e.maxEndurance && x.maxHate === e.maxHate && x.attack === e.attack && x.traits === e.traits && x.notes === e.notes); if (!duplicate) { if (state.library.some(x => x.id === e.id)) e.id = id(); state.library.push(e); added++; } }); return added; }); },
       exportBackup: () => copy(state),
       restoreBackup(data) { const checked = validate(data), previous = state, previousError = loadError; try { state = checked; loadError = null; commit(); } catch (error) { state = previous; loadError = previousError; throw error; } }
     };

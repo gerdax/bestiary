@@ -269,7 +269,7 @@
   let touchLocked = false, touchGesture = null, suppressTouchClick = false;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
-  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
+  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-fullscreen-controls"><button type="button" id="map-fullscreen" aria-label="Rozwiń mapę na całe okno" title="Rozwiń mapę na całe okno" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
   const sceneInput = doc.getElementById('map-scene'), sizeInput = doc.getElementById('map-size');
   for (const [value, label] of Object.entries(SCENES)) { const option = doc.createElement('option'); option.value = value; option.textContent = label; sceneInput.appendChild(option); }
   sceneInput.value = 'clearing';
@@ -388,24 +388,31 @@
   heroSheetHost.hidden = true;
   section.append(heroSheetHost);
   const heroSheet = root.OneRingHeroSheet.mount(heroSheetHost);
+  const enemySheet = el('div', 'map-enemy-sheet');
+  enemySheet.hidden = true; section.appendChild(enemySheet);
   const enemyDetails = el('details', 'sheet-disclosure map-enemy-details');
   enemyDetails.id = 'map-enemy-details';
   enemyDetails.hidden = true;
   const enemyDetailBody = el('div', 'map-enemy-detail-body');
   enemyDetails.append(el('summary', '', 'Biegłości bojowe i Atrybuty'), enemyDetailBody);
-  section.appendChild(enemyDetails);
+  enemySheet.appendChild(enemyDetails);
+  const enemyNotes = el('details', 'sheet-disclosure map-enemy-details');
+  enemyNotes.id = 'map-enemy-notes'; enemyNotes.hidden = true;
+  const enemyNotesBody = el('p', 'map-panel-detail');
+  enemyNotes.append(el('summary', '', 'Notatki'), enemyNotesBody);
+  enemySheet.appendChild(enemyNotes);
   let detailEnemyId = null;
   const lastSelectedByType = { hero: null, enemy: null };
   function renderPanel(participants) {
     doc.getElementById('map-center').disabled = !currentMap || !participants.some(person => person.id === selected);
     const selectedHero = participants.find(p => p.id === selected && p.type === "hero");
     heroSheet.show(!store.loadError && currentMap && selectedHero ? selectedHero.heroId : null);
-    enemyDetails.hidden = true;
+    enemySheet.hidden = true; enemyDetails.hidden = true; enemyNotes.hidden = true;
     panel.replaceChildren();
     panel.classList.remove('is-defeated');
     if (store.loadError) { panel.append(el('p', 'eyebrow', 'BŁĄD ZAPISU'), el('h3', '', 'Nie można wczytać danych'), el('p', 'map-panel-help', 'Przywróć poprawną kopię zapasową, aby ponownie korzystać z mapy.')); return; }
     if (!currentMap) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Stwórz mapę, by zobaczyć dodanych uczestników')); return; }
-    if (!participants.length) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Pusta mapa'), el('p', 'map-panel-help', 'Dodaj bohatera lub przeciwnika do aktywnej walki.')); return; }
+    if (!participants.length) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Dodaj bohatera lub przeciwnika do aktywnej walki.')); return; }
     const names = displayNames(participants), index = participants.findIndex(p => p.id === selected), person = participants[index];
     if (!person) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Dotknij znacznika postaci na mapie, aby zobaczyć zasoby i działania.')); return; }
     panel.classList.toggle('is-defeated', !!person.defeated);
@@ -489,9 +496,10 @@
         wounds.appendChild(input);
       });
       panel.appendChild(wounds);
-      if (detailEnemyId !== person.id) enemyDetails.open = false;
+      if (detailEnemyId !== person.id) { enemyDetails.open = false; enemyNotes.open = false; }
       detailEnemyId = person.id;
-      enemyDetails.hidden = false;
+      enemySheet.hidden = false; enemyDetails.hidden = false; enemyNotes.hidden = !String(person.notes || '').trim();
+      enemyNotesBody.textContent = person.notes || 'Brak notatek.';
       enemyDetailBody.replaceChildren();
       for (const [label, value] of [['Biegłości bojowe', person.attack], ['Atrybuty', person.traits]]) {
         const block = el('div');
@@ -528,6 +536,8 @@
     const snapshot = store.getState();
     const participating = new Set(snapshot.heroParticipants.map(p => p.heroId));
     snapshot.heroes.filter(hero => !participating.has(hero.id)).forEach(hero => store.addHero(hero.id));
+    const firstHero = store.getParticipants().filter(person => person.type === 'hero').sort((a, b) => polish.compare(a.name, b.name))[0];
+    if (firstHero) selectParticipant(firstHero.id);
   }));
   doc.getElementById('map-clear').addEventListener('click', () => {
     if (root.confirm('Wyczyścić potyczkę? Mapa i wszyscy uczestnicy zostaną usunięci z potyczki. Arkusze bohaterów i biblioteka pozostaną zachowane.')) run(() => store.clearEncounter());
@@ -540,6 +550,49 @@
   doc.getElementById('map-zoom-in').addEventListener('click', () => zoomAt(1.25));
   doc.getElementById('map-zoom-out').addEventListener('click', () => zoomAt(.8));
   doc.getElementById('map-fit').addEventListener('click', fit);
+  const fullscreenButton = doc.getElementById('map-fullscreen');
+  let expanded = false, savedOverflow = '', inactiveSiblings = [];
+  function setExpanded(value) {
+    if (expanded === value) return;
+    restoreTokenDrag(); touchPoints.clear(); touchGesture = null; touchLocked = false;
+    expanded = value;
+    viewport.classList.toggle('is-fullscreen', value);
+    fullscreenButton.setAttribute('aria-pressed', String(value));
+    const label = value ? 'Przywróć zwykły widok mapy' : 'Rozwiń mapę na całe okno';
+    fullscreenButton.setAttribute('aria-label', label); fullscreenButton.title = label;
+    fullscreenButton.querySelector('path').setAttribute('d', value ? 'M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5' : 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5');
+    if (value) {
+      savedOverflow = doc.body.style.overflow; doc.body.style.overflow = 'hidden';
+      for (let node = viewport; node && node !== doc.body; node = node.parentElement) {
+        for (const sibling of node.parentElement.children) if (sibling !== node) {
+          inactiveSiblings.push([sibling, sibling.inert]); sibling.inert = true;
+        }
+      }
+      viewport.setAttribute('role', 'dialog'); viewport.setAttribute('aria-modal', 'true');
+    } else {
+      doc.body.style.overflow = savedOverflow;
+      inactiveSiblings.forEach(([node, inert]) => { node.inert = inert; }); inactiveSiblings = [];
+      viewport.removeAttribute('role'); viewport.removeAttribute('aria-modal');
+    }
+    fullscreenButton.focus({ preventScroll: true });
+    root.requestAnimationFrame(fit);
+  }
+  fullscreenButton.addEventListener('click', () => setExpanded(!expanded));
+  doc.addEventListener('keydown', event => {
+    if (!expanded) return;
+    if (event.key === 'Escape') { event.preventDefault(); setExpanded(false); }
+    if (event.key === 'Tab') {
+      const controls = [...viewport.querySelectorAll('button:not(:disabled)')].filter(node => node.getClientRects().length);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && doc.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && doc.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+  doc.addEventListener('one-ring:tab', event => {
+    const tab = typeof event.detail === 'string' ? event.detail : event.detail && event.detail.tab;
+    if (expanded && tab !== 'map') setExpanded(false);
+  });
+
   doc.getElementById('map-center').addEventListener('click', () => {
     if (!currentMap || !selected) return;
     const marker = Array.from(tokens.children).find(node => node.dataset.id === selected);
