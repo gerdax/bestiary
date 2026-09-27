@@ -2,7 +2,7 @@
 .heroes-layout { display: grid; gap: 0; align-items: start; min-width: 0; }
 .hero-list { display: flex; gap: 4px; padding: 4px 4px 0; margin-bottom: -1px; position: relative; z-index: 1; align-items: end; overflow-x: auto; max-width: 100%; }
 .hero-list-card { flex: 0 0 auto; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 10px 15px; border: 1px solid var(--line); border-radius: 8px 8px 0 0; background: #eee7dc; color: var(--ink); font-family: Fraunces, Georgia, serif; font-size: 16px; cursor: pointer; }
-.hero-list-card.is-editing, .hero-list-card[aria-selected="true"] { border-color: #ae4c3d; border-bottom-color: #fffdf8; background: #fffdf8; color: #ae4c3d; border-top-width: 3px; padding-top: 14px; font-weight: 700; }
+.hero-list-card.is-editing, .hero-list-card[aria-selected="true"] { border-color: var(--clay); border-bottom-color: #fffdf8; background: #fffdf8; color: var(--clay); border-top-width: 3px; padding-top: 14px; font-weight: 700; }
 .hero-list-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .hero-empty { padding: 22px; color: var(--muted); text-align: center; border: 1px dashed var(--line); }
 .hero-editor { display: grid; gap: 16px; padding: 24px; }
@@ -21,7 +21,7 @@
 @media (max-width: 760px) { .hero-editor { padding: 18px; } .hero-editor-top { flex-wrap: wrap; } .hero-editor-actions { order: 3; width: 100%; margin-left: 0; } .hero-editor-footer { align-items: start; flex-direction: column; } }
 
 /* Character sheet: reading order follows the printed sheet at every width. */
-.hero-editor { --sheet-red: #ae4c3d; padding: 26px; gap: 24px; background: #fffdf8; border-top: 1px solid var(--sheet-red); }
+.hero-editor { --sheet-red: var(--clay); padding: 26px; gap: 24px; background: #fffdf8; border-top: 1px solid var(--sheet-red); }
 .hero-editor h3 { color: var(--sheet-red); font-size: 21px; font-weight: 600; letter-spacing: .04em; }
 .hero-editor label { font-size: 10px; letter-spacing: .015em; color: #70695e; gap: 5px; }
 .hero-editor input, .hero-editor textarea, .hero-editor select { min-width: 0; border: 0; border-bottom: 1px solid #d8cabc; border-radius: 0; background: #f4efe5; color: #282e28; padding: 8px; font-size: 14px; }

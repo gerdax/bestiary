@@ -441,8 +441,8 @@ label, input, select, textarea { min-width: 0; }
 #library > .section-heading { gap: 16px; flex-wrap: wrap; }
 #library .library-transfer { align-items: center; flex-wrap: wrap; }
 
-#legacy-battle-link { margin-left: auto; color: var(--muted); font-size: 12px; text-decoration: none; }
-#legacy-battle-link:hover { text-decoration: underline; }
+#legacy-battle-link { margin-left: auto; color: var(--clay); font-size: 12px; }
+
 
 .kind-field { display: grid; gap: 7px; }
 .kind-combobox { position: relative; min-width: 0; }
@@ -451,3 +451,21 @@ label, input, select, textarea { min-width: 0; }
 #enemy-kind-options { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; max-height: 240px; overflow-y: auto; border: 1px solid var(--line); background: var(--paper); box-shadow: 0 5px 12px rgb(67 49 21 / .15); }
 #enemy-kind-options [role="option"] { padding: 10px 12px; cursor: pointer; }
 #enemy-kind-options [aria-selected="true"], #enemy-kind-options [role="option"]:hover { background: var(--clay); color: white; }
+
+/* Shared appearance for actions presented as text links. */
+:is(.text-button, .library-actions .delete, .map-panel-remove, #legacy-battle-link) {
+  color: var(--clay);
+  background: transparent;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+  text-decoration-skip-ink: auto;
+}
+:is(.text-button, .library-actions .delete, .map-panel-remove, .map-switch-type, #legacy-battle-link):focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+}
+:is(.text-button, .library-actions .delete, .map-panel-remove):disabled {
+  opacity: .4;
+  cursor: default;
+}
