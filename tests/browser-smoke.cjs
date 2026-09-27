@@ -176,6 +176,9 @@ async function main() {
   const touchToken = mobilePage.locator('.map-token').first();
   await touchToken.waitFor();
   const touchId = await touchToken.getAttribute('data-id');
+  await mobilePage.evaluate(id => OneRingStore.moveToken(id, 600, 600), touchId);
+  await mobilePage.locator('#map-fit').click();
+  await touchToken.scrollIntoViewIfNeeded();
   const touchBefore = await mobilePage.evaluate(id => JSON.parse(localStorage.getItem('one-ring-state')).map.positions[id], touchId);
   const touchBox = await touchToken.boundingBox();
   const cdp = await mobile.newCDPSession(mobilePage);

@@ -260,3 +260,31 @@ test('unchecking hero wound clears injury atomically and rejects unwounded text'
   assert.equal(store.getState().heroes[0].injury,'');
   assert.equal(createStore(disk).getState().heroes[0].injury,'');
 });
+
+test('connected scene features persist through save, reload and backup without affecting old maps', () => {
+  const disk=storage(), store=createStore(disk);
+  const scenes=['forest_clearing','forest_crossroads','road','river_ford','marsh','ravine'];
+  for(const scene of scenes) {
+    const map={scene,size:'small',seed:'features',width:900,height:900,terrain:[],positions:{},features:[{kind:'trail',width:50,points:[{x:0,y:300},{x:899,y:450}]}]};
+    store.setMap(map);
+    assert.deepEqual(createStore(disk).getState().map,map);
+    const restored=createStore(storage());restored.restoreBackup(store.exportBackup());
+    assert.deepEqual(restored.getState().map,map);
+  }
+  const legacy={scene:'forest',size:'small',seed:'old',width:900,height:600,terrain:[],positions:{}};
+  store.setMap(legacy);
+  assert.deepEqual(store.getState().map,legacy);
+  assert.deepEqual(createStore(disk).getState().map,legacy);
+});
+
+test('malformed connected features are rejected without changing saved state', () => {
+  const disk=storage(), store=createStore(disk);
+  const base={scene:'river_ford',size:'small',seed:'features',width:900,height:900,terrain:[],positions:{},features:[{kind:'river',width:100,points:[{x:400,y:0},{x:450,y:899}]}]};
+  store.setMap(base);
+  const before=store.exportBackup(), saved=disk.data['one-ring-state'];
+  for(const change of [{kind:'script'},{width:0},{width:901},{points:[]},{points:[{x:-1,y:0},{x:10,y:10}]},{points:[{x:10,y:0},{x:900,y:10}]}]) {
+    assert.throws(()=>store.setMap({...base,features:[{...base.features[0],...change}]}));
+    assert.deepEqual(store.exportBackup(),before);
+    assert.equal(disk.data['one-ring-state'],saved);
+  }
+});

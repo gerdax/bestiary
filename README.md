@@ -31,3 +31,7 @@ Test panelu bohatera na mapie: `node tests/map-hero-panel.cjs` (Playwright/Chrom
 Interfejs wspólnego stanu opisuje [STATE_API.md](STATE_API.md).
 
 Test gestów mapy: `node tests/map-touch.cjs` (Playwright/Chrome; izolowane dane i zdarzenia dotykowe CDP).
+
+Scenerie map: Las, Polana, Ruiny, Jaskinia, Las z polaną, Leśne rozstaje, Trakt, Rzeka z brodem, Bagna i Skalisty wąwóz. Ścieżki i woda są elementami wizualnymi; nie blokują przesuwania żetonów. Nowe układy powstają po wygenerowaniu mapy — zapisane mapy nie zmieniają się po aktualizacji.
+
+Test scenerii: `node tests/map-scenes.cjs` (Playwright/Chrome; izolowane dane, generowanie, przeładowanie i przywracanie kopii).

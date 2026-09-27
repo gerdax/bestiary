@@ -88,3 +88,12 @@ restore; checking an already checked wound does not defeat it again.
 Explicit `saveHero({id, wounded:false})` clears `injury` atomically. Injury writes
 while unwounded are cleared; unrelated saves and loading legacy data preserve
 existing injury text. Editors disable and blank the injury field while unwounded.
+
+Map scenes additionally include `forest_clearing`, `forest_crossroads`, `road`,
+`river_ford`, `marsh`, and `ravine`. Optional `map.features` stores connected
+paths as `{kind, width, points:[{x,y}, ...]}`: kind is `trail`, `river`, or `ford`;
+width is a positive integer no larger than the larger map dimension. There are
+at most 64 features, with 2–64 integer points each, within map bounds. Features
+are visual terrain only; they impose no movement rules. Legacy maps without
+features remain unchanged; backups still use version 2. New generation affects
+only explicitly regenerated maps, never existing terrain or token positions.

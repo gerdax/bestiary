@@ -70,7 +70,7 @@
 
   function mapShape(raw, participants) {
     if (raw === null) return null;
-    if (!object(raw) || !["forest", "clearing", "ruins", "cave"].includes(raw.scene) || !["small", "medium", "large"].includes(raw.size) || !(typeof raw.seed === "string" || Number.isFinite(raw.seed)) || !Number.isInteger(raw.width) || !Number.isInteger(raw.height) || raw.width < 65 || raw.height < 65 || !Array.isArray(raw.terrain) || !object(raw.positions)) throw new Error("Invalid map");
+    if (!object(raw) || !["forest", "clearing", "ruins", "cave", "forest_clearing", "forest_crossroads", "road", "river_ford", "marsh", "ravine"].includes(raw.scene) || !["small", "medium", "large"].includes(raw.size) || !(typeof raw.seed === "string" || Number.isFinite(raw.seed)) || !Number.isInteger(raw.width) || !Number.isInteger(raw.height) || raw.width < 65 || raw.height < 65 || !Array.isArray(raw.terrain) || !object(raw.positions)) throw new Error("Invalid map");
     const allowed = new Set(participants);
     const positions = {};
     Object.keys(raw.positions).forEach(pid => {
@@ -82,7 +82,19 @@
       if (!object(tile) || !TERRAIN_KINDS.has(tile.kind) || !Number.isInteger(tile.x) || !Number.isInteger(tile.y) || !Number.isInteger(tile.r) || !Number.isInteger(tile.rotation) || !Number.isInteger(tile.variant) || tile.x < 0 || tile.x >= raw.width || tile.y < 0 || tile.y >= raw.height || tile.r < 0 || tile.variant < 0) throw new Error("Invalid terrain");
       return copy(tile);
     });
-    return { scene: raw.scene, size: raw.size, seed: raw.seed, width: raw.width, height: raw.height, terrain, positions };
+    const result = { scene: raw.scene, size: raw.size, seed: raw.seed, width: raw.width, height: raw.height, terrain, positions };
+    if (Object.hasOwn(raw, "features")) {
+      if (!Array.isArray(raw.features) || raw.features.length > 64) throw new Error("Invalid map features");
+      result.features = raw.features.map(feature => {
+        if (!object(feature) || !["trail", "river", "ford"].includes(feature.kind) || !Number.isInteger(feature.width) || feature.width <= 0 || feature.width > Math.max(raw.width, raw.height) || !Array.isArray(feature.points) || feature.points.length < 2 || feature.points.length > 64) throw new Error("Invalid map feature");
+        const points = feature.points.map(point => {
+          if (!object(point) || !Number.isInteger(point.x) || !Number.isInteger(point.y) || point.x < 0 || point.y < 0 || point.x >= raw.width || point.y >= raw.height) throw new Error("Invalid map feature point");
+          return { x: point.x, y: point.y };
+        });
+        return { kind: feature.kind, width: feature.width, points };
+      });
+    }
+    return result;
   }
 
   function validate(raw) {

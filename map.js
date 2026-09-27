@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const SIZES = { small: [900, 900], medium: [1200, 1200], large: [1600, 1600] };
-  const SCENES = { forest: 'Las', clearing: 'Polana', ruins: 'Ruiny', cave: 'Jaskinia' };
+  const SCENES = { forest: 'Las', forest_clearing: 'Las z polaną', forest_crossroads: 'Leśne rozstaje', road: 'Trakt', river_ford: 'Rzeka z brodem', marsh: 'Bagna', ravine: 'Skalisty wąwóz', clearing: 'Polana', ruins: 'Ruiny', cave: 'Jaskinia' };
   const SVG = 'http://www.w3.org/2000/svg';
   const STANCES = ['Zapalczywa', 'Wyważona', 'Defensywna', 'Bezpieczna'];
   const polish = new Intl.Collator('pl');
@@ -12,13 +12,104 @@
     for (const char of String(seed)) { h ^= char.charCodeAt(0); h = Math.imul(h, 16777619); }
     return function () { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   }
+  function distanceToSegment(x, y, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const t = clamp(((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+    return Math.hypot(x - a.x - t * dx, y - a.y - t * dy);
+  }
+  function distanceToFeature(x, y, feature) {
+    let distance = Infinity;
+    for (let i = 1; i < feature.points.length; i++) distance = Math.min(distance, distanceToSegment(x, y, feature.points[i - 1], feature.points[i]));
+    return distance;
+  }
   function generateTerrain(scene = 'clearing', size = 'medium', seed = '1') {
     scene = SCENES[scene] ? scene : 'clearing';
     size = SIZES[size] ? size : 'medium';
-    const [width, height] = SIZES[size], rng = randomFor(seed), terrain = [];
+    const [width, height] = SIZES[size], rng = randomFor(seed), terrain = [], features = [];
     const rand = (a, b) => Math.round(a + rng() * (b - a));
     const add = (kind, x, y, r, rotation = 0, variant = 0) => terrain.push({ kind, x: Math.round(x), y: Math.round(y), r: Math.round(r), rotation: Math.round(rotation), variant: Math.round(variant) });
+    const addFeature = (kind, featureWidth, points) => {
+      const feature = { kind, width: Math.round(featureWidth), points: points.map(([x, y]) => ({ x: clamp(Math.round(x), 0, width - 1), y: clamp(Math.round(y), 0, height - 1) })) };
+      features.push(feature);
+      return feature;
+    };
+    const route = (axis, centre, bend, sections = 8) => Array.from({ length: sections + 1 }, (_, i) => {
+      const u = i / sections, across = u * (axis === 'x' ? width - 1 : height - 1);
+      const wiggle = Math.sin(u * Math.PI * 2 + bend) * (axis === 'x' ? height : width) * .075 + Math.sin(u * Math.PI * 4 + bend * .7) * (axis === 'x' ? height : width) * .023;
+      return axis === 'x' ? [across, centre + wiggle] : [centre + wiggle, across];
+    });
+    const clearOf = (x, y, r, kinds = ['trail', 'ford']) => features.every(feature => !kinds.includes(feature.kind) || distanceToFeature(x, y, feature) > feature.width / 2 + r + 6);
+    const wooded = (target, allow) => {
+      for (let i = 0, attempts = 0; i < target && attempts < target * 12; attempts++) {
+        const x = rand(30, width - 30), y = rand(30, height - 30), r = rand(16, 32);
+        if (!clearOf(x, y, r) || (allow && !allow(x, y, r))) continue;
+        const choice = rng();
+        add(choice < .76 ? 'tree' : choice < .91 ? 'shrub' : choice < .97 ? 'boulder' : 'log', x, y, r, rand(0, 359), rand(0, 3));
+        i++;
+      }
+    };
     const count = Math.round(width * height / 10500);
+    const newScene = ['forest', 'forest_clearing', 'forest_crossroads', 'road', 'river_ford', 'marsh', 'ravine'].includes(scene);
+    if (newScene) {
+      const axis = rng() < .5 ? 'x' : 'y', centre = (axis === 'x' ? height : width) * (.39 + rng() * .22), bend = rng() * Math.PI * 2;
+      if (scene === 'forest') {
+        addFeature('trail', Math.round(width * .045), route(axis, centre, bend));
+        wooded(Math.round(count * 2.6));
+      } else if (scene === 'forest_clearing') {
+        const cx = width * (.43 + rng() * .14), cy = height * (.43 + rng() * .14);
+        const path = route(axis, axis === 'x' ? cy : cx, bend).slice(0, 5);
+        path[path.length - 1] = [cx, cy];
+        addFeature('trail', Math.round(width * .05), path);
+        const rx = width * (.19 + rng() * .04), ry = height * (.17 + rng() * .05);
+        wooded(Math.round(count * 2.7), (x, y, r) => Math.hypot((x - cx) / (rx + r), (y - cy) / (ry + r)) > 1);
+        for (let i = 0; i < count * .24; i++) add('grass', rand(cx - rx * .7, cx + rx * .7), rand(cy - ry * .7, cy + ry * .7), rand(7, 15), rand(0, 359), rand(0, 3));
+      } else if (scene === 'forest_crossroads') {
+        const crossX = width * (.42 + rng() * .16), crossY = height * (.42 + rng() * .16);
+        const main = route(axis, axis === 'x' ? crossY : crossX, bend);
+        main[4] = [crossX, crossY];
+        addFeature('trail', Math.round(width * .05), main);
+        const branch = route(axis === 'x' ? 'y' : 'x', axis === 'x' ? crossX : crossY, bend + 1.3);
+        branch[4] = [crossX, crossY];
+        addFeature('trail', Math.round(width * .045), branch);
+        wooded(Math.round(count * 2.7));
+      } else if (scene === 'road') {
+        addFeature('trail', Math.round(width * .11), route(axis, centre, bend));
+        for (let i = 0; i < count * 1.25; i++) {
+          const x = rand(24, width - 24), y = rand(24, height - 24), r = rand(10, 27);
+          if (!clearOf(x, y, r + 12)) continue;
+          const choice = rng(); add(choice < .43 ? 'grass' : choice < .75 ? 'shrub' : choice < .9 ? 'tree' : 'boulder', x, y, r, rand(0, 359), rand(0, 3));
+        }
+      } else if (scene === 'river_ford') {
+        const river = addFeature('river', Math.round(width * .12), route(axis, centre, bend));
+        const crossing = river.points[4];
+        const other = axis === 'x' ? 'y' : 'x';
+        const approach = route(other, axis === 'x' ? crossing.x : crossing.y, bend + 1.8);
+        approach[4] = [crossing.x, crossing.y];
+        addFeature('trail', Math.round(width * .055), approach.slice(0, 4));
+        addFeature('trail', Math.round(width * .055), approach.slice(5));
+        addFeature('ford', Math.round(width * .075), [approach[3], approach[4], approach[5]]);
+        for (let i = 0; i < count * 1.2; i++) {
+          const x = rand(25, width - 25), y = rand(25, height - 25), r = rand(10, 29);
+          if (distanceToFeature(x, y, river) < river.width / 2 + r + 5 || !clearOf(x, y, r)) continue;
+          const choice = rng(); add(choice < .46 ? 'grass' : choice < .77 ? 'shrub' : choice < .91 ? 'tree' : 'boulder', x, y, r, rand(0, 359), rand(0, 3));
+        }
+      } else if (scene === 'marsh') {
+        const clusters = Array.from({ length: 6 }, () => ({ x: rand(width * .15, width * .85), y: rand(height * .15, height * .85) }));
+        for (let i = 0; i < count * 1.7; i++) {
+          const cluster = clusters[rand(0, clusters.length - 1)], x = clamp(Math.round(cluster.x + (rng() + rng() + rng() - 1.5) * width * .28), 30, width - 30), y = clamp(Math.round(cluster.y + (rng() + rng() + rng() - 1.5) * height * .28), 30, height - 30);
+          const choice = rng(); add(choice < .28 ? 'pool' : choice < .69 ? 'grass' : choice < .94 ? 'shrub' : 'log', x, y, rand(8, 30), rand(0, 359), rand(0, 3));
+        }
+      } else if (scene === 'ravine') {
+        const corridor = addFeature('trail', Math.round(width * .12), route(axis, centre, bend));
+        for (let i = 0; i < count * 2.6; i++) {
+          const x = rand(24, width - 24), y = rand(24, height - 24), r = rand(13, 37);
+          const distance = distanceToFeature(x, y, corridor);
+          if (distance < corridor.width / 2 + r + 5) continue;
+          const choice = rng(); add(choice < .68 ? 'boulder' : choice < .9 ? 'rubble' : 'grass', x, y, r, rand(0, 359), rand(0, 3));
+        }
+      }
+      return { scene, size, seed: String(seed), width, height, terrain, features, positions: {} };
+    }
     for (let i = 0; i < count; i++) {
       const x = rand(28, width - 28), y = rand(28, height - 28);
       if (scene === 'forest') {
@@ -47,8 +138,10 @@
   let touchLocked = false, touchGesture = null, suppressTouchClick = false;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
-  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
+  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
   const sceneInput = doc.getElementById('map-scene'), sizeInput = doc.getElementById('map-size');
+  for (const [value, label] of Object.entries(SCENES)) { const option = doc.createElement('option'); option.value = value; option.textContent = label; sceneInput.appendChild(option); }
+  sceneInput.value = 'clearing';
   const generateButton = doc.getElementById('map-generate'), viewport = doc.getElementById('map-viewport'), stage = doc.getElementById('map-stage');
   const terrainSvg = doc.getElementById('map-terrain'), tokens = doc.getElementById('map-tokens'), panel = doc.getElementById('map-panel'), blank = doc.getElementById('map-blank'), errorBox = doc.getElementById('map-error');
   function run(action) { try { action(); errorBox.hidden = true; } catch (error) { errorBox.textContent = error && error.message ? error.message : 'Nie udało się zapisać zmiany mapy.'; errorBox.hidden = false; } }
@@ -74,10 +167,35 @@
     terrainSvg.setAttribute('viewBox', `0 0 ${map.width} ${map.height}`);
     terrainSvg.setAttribute('width', map.width); terrainSvg.setAttribute('height', map.height);
     const scene = SCENES[map.scene] ? map.scene : 'clearing';
-    svg('rect', { width: map.width, height: map.height, fill: { forest: '#a2aa80', clearing: '#b9bd91', ruins: '#afa997', cave: '#777a71' }[scene] }, terrainSvg);
+    svg('rect', { width: map.width, height: map.height, fill: { forest: '#a2aa80', forest_clearing: '#a2aa80', forest_crossroads: '#a2aa80', road: '#aaad87', river_ford: '#a7ae89', marsh: '#899b7d', ravine: '#9b9986', clearing: '#b9bd91', ruins: '#afa997', cave: '#777a71' }[scene] }, terrainSvg);
     const rng = randomFor(map.seed + '-ground');
     for (let i = 0; i < Math.round(map.width * map.height / 4500); i++) {
       svg('ellipse', { cx: Math.round(rng() * map.width), cy: Math.round(rng() * map.height), rx: Math.round(12 + rng() * 55), ry: Math.round(5 + rng() * 22), fill: scene === 'cave' ? '#8e8e7c' : '#ddd1a2', opacity: scene === 'ruins' ? .12 : .16, transform: `rotate(${Math.round(rng() * 180)} ${Math.round(rng() * map.width)} ${Math.round(rng() * map.height)})` }, terrainSvg);
+    }
+    const features = Array.isArray(map.features) ? map.features : [];
+    for (const kind of ['river', 'trail', 'ford']) {
+      for (const feature of features) {
+        if (!feature || feature.kind !== kind || !Array.isArray(feature.points) || feature.points.length < 2 || !Number.isFinite(feature.width)) continue;
+        const points = feature.points.filter(point => point && Number.isFinite(point.x) && Number.isFinite(point.y));
+        if (points.length < 2) continue;
+        const d = points.map((point, index) => `${index ? 'L' : 'M'}${point.x} ${point.y}`).join(' ');
+        const base = { d, fill: 'none', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+        const className = `map-feature map-feature-${kind}`;
+        if (kind === 'river') {
+          svg('path', { ...base, class: className, stroke: '#617d78', 'stroke-width': feature.width + 10 }, terrainSvg);
+          svg('path', { ...base, stroke: '#648f93', 'stroke-width': feature.width }, terrainSvg);
+          svg('path', { ...base, stroke: '#a4bdb1', 'stroke-width': Math.max(3, feature.width * .08), opacity: .58 }, terrainSvg);
+        } else if (kind === 'ford') {
+          svg('path', { ...base, class: className, stroke: '#62685e', 'stroke-width': feature.width + 8 }, terrainSvg);
+          svg('path', { ...base, stroke: '#b6ad91', 'stroke-width': feature.width }, terrainSvg);
+          svg('path', { ...base, stroke: '#dbcfab', 'stroke-width': Math.max(3, feature.width * .19), opacity: .65, 'stroke-dasharray': '8 13' }, terrainSvg);
+        } else {
+          const road = scene === 'road', rock = scene === 'ravine';
+          svg('path', { ...base, class: className, stroke: road ? '#8d8265' : rock ? '#797667' : '#80795e', 'stroke-width': feature.width + (road ? 17 : 10) }, terrainSvg);
+          svg('path', { ...base, stroke: road ? '#c8b88b' : rock ? '#b4ae94' : '#b5a77e', 'stroke-width': feature.width }, terrainSvg);
+          if (road) svg('path', { ...base, stroke: '#e0cf9c', 'stroke-width': Math.max(3, feature.width * .09), opacity: .6 }, terrainSvg);
+        }
+      }
     }
     map.terrain.forEach(record => shape(record, terrainSvg));
     svg('rect', { x: 3, y: 3, width: map.width - 6, height: map.height - 6, fill: 'none', stroke: '#4f493a', 'stroke-width': 6, opacity: .55 }, terrainSvg);
@@ -255,7 +373,7 @@
   function refresh(snapshot) {
     const map = snapshot.map, participants = store.getParticipants();
     if (selected && !participants.some(p => p.id === selected)) selected = null;
-    const key = map ? JSON.stringify([map.seed, map.scene, map.size, map.width, map.height, map.terrain]) : '';
+    const key = map ? JSON.stringify([map.seed, map.scene, map.size, map.width, map.height, map.terrain, map.features]) : '';
     const terrainChanged = key !== fittedKey;
     if (terrainChanged) { gesture = null; touchPoints.clear(); touchGesture = null; touchLocked = false; }
     currentMap = map;
