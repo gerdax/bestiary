@@ -45,7 +45,7 @@
   let currentMap = null, selected = null, zoom = 1, offsetX = 0, offsetY = 0, fittedKey = '', gesture = null;
   const el = (tag, className, textValue) => { const node = doc.createElement(tag); if (className) node.className = className; if (textValue != null) node.textContent = textValue; return node; };
   const svg = (tag, attrs, parent) => { const node = doc.createElementNS(SVG, tag); Object.entries(attrs || {}).forEach(([key, value]) => node.setAttribute(key, String(value))); if (parent) parent.appendChild(node); return node; };
-  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
+  section.innerHTML = '<div class="section-heading map-heading"><h2>Potyczka</h2><div class="map-heading-actions"><button type="button" class="text-button" id="map-add-heroes">Dodaj bohaterów</button><button type="button" class="text-button" id="map-clear">Wyczyść potyczkę</button></div></div><div class="map-toolbar paper"><label>Sceneria<select id="map-scene"><option value="clearing">Polana</option><option value="forest">Las</option><option value="ruins">Ruiny</option><option value="cave">Jaskinia</option></select></label><label>Rozmiar<select id="map-size"><option value="small">Mały</option><option value="medium" selected>Średni</option><option value="large">Duży</option></select></label><button class="primary" id="map-generate" type="button">Wygeneruj mapę</button></div><p class="map-error" id="map-error" role="alert" hidden></p><div class="map-layout"><div class="map-viewport" id="map-viewport" aria-label="Mapa starcia"><div class="map-stage" id="map-stage"><svg id="map-terrain" aria-hidden="true"></svg><div id="map-tokens"></div></div><div class="map-blank" id="map-blank"><span>✦</span><p>Wybierz scenerię i rozmiar, aby utworzyć mapę.</p></div><div class="map-zoom-controls map-center-controls"><button type="button" id="map-center" aria-label="Wyśrodkuj na aktywnej postaci" title="Wyśrodkuj na aktywnej postaci" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg></button></div><div class="map-zoom-controls" role="group" aria-label="Powiększenie mapy"><button type="button" id="map-fit">Dopasuj</button><button type="button" id="map-zoom-out" aria-label="Pomniejsz mapę">−</button><button type="button" id="map-zoom-in" aria-label="Powiększ mapę">+</button></div></div><aside class="map-panel paper" id="map-panel" aria-live="polite"></aside></div>';
   const sceneInput = doc.getElementById('map-scene'), sizeInput = doc.getElementById('map-size');
   const generateButton = doc.getElementById('map-generate'), viewport = doc.getElementById('map-viewport'), stage = doc.getElementById('map-stage');
   const terrainSvg = doc.getElementById('map-terrain'), tokens = doc.getElementById('map-tokens'), panel = doc.getElementById('map-panel'), blank = doc.getElementById('map-blank'), errorBox = doc.getElementById('map-error');
@@ -132,15 +132,27 @@
   heroSheetHost.hidden = true;
   section.append(heroSheetHost);
   const heroSheet = root.OneRingHeroSheet.mount(heroSheetHost);
+  const enemyDetails = el('details', 'sheet-disclosure map-enemy-details');
+  enemyDetails.id = 'map-enemy-details';
+  enemyDetails.hidden = true;
+  const enemyDetailBody = el('div', 'map-enemy-detail-body');
+  enemyDetails.append(el('summary', '', 'Biegłości bojowe i Atrybuty'), enemyDetailBody);
+  section.appendChild(enemyDetails);
+  let detailEnemyId = null;
+  const lastSelectedByType = { hero: null, enemy: null };
   function renderPanel(participants) {
+    doc.getElementById('map-center').disabled = !currentMap || !participants.some(person => person.id === selected);
     const selectedHero = participants.find(p => p.id === selected && p.type === "hero");
     heroSheet.show(!store.loadError && currentMap && selectedHero ? selectedHero.heroId : null);
+    enemyDetails.hidden = true;
     panel.replaceChildren();
+    panel.classList.remove('is-defeated');
     if (store.loadError) { panel.append(el('p', 'eyebrow', 'BŁĄD ZAPISU'), el('h3', '', 'Nie można wczytać danych'), el('p', 'map-panel-help', 'Przywróć poprawną kopię zapasową, aby ponownie korzystać z mapy.')); return; }
     if (!currentMap) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Stwórz mapę, by zobaczyć dodanych uczestników')); return; }
     if (!participants.length) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('h3', '', 'Pusta mapa'), el('p', 'map-panel-help', 'Dodaj bohatera lub przeciwnika do aktywnej walki.')); return; }
     const names = displayNames(participants), index = participants.findIndex(p => p.id === selected), person = participants[index];
     if (!person) { panel.append(el('p', 'eyebrow', 'UCZESTNICY'), el('p', 'map-panel-help', 'Dotknij znacznika postaci na mapie, aby zobaczyć zasoby i działania.')); return; }
+    panel.classList.toggle('is-defeated', !!person.defeated);
     const heading = el('div', 'map-panel-heading');
     const previous = el('button', 'map-cycle-prev', '‹'), next = el('button', 'map-cycle-next', '›');
     const typeName = person.type === 'hero' ? 'bohater' : 'przeciwnik';
@@ -157,8 +169,23 @@
       if (replacement) replacement.focus();
     });
     const navigation = el('div', 'map-panel-navigation'); navigation.append(previous, next);
-    heading.append(el('p', 'eyebrow', person.type === 'hero' ? 'BOHATER' : 'PRZECIWNIK'), navigation);
+    lastSelectedByType[person.type] = person.id;
+    const otherType = person.type === 'hero' ? 'enemy' : 'hero';
+    const otherParticipants = participants.filter(item => item.type === otherType);
+    const switchType = el('button', 'eyebrow map-switch-type', person.type === 'hero' ? 'BOHATER' : 'PRZECIWNIK');
+    switchType.type = 'button';
+    switchType.title = person.type === 'hero' ? 'Przełącz na przeciwnika' : 'Przełącz na bohatera';
+    switchType.setAttribute('aria-label', switchType.title);
+    switchType.disabled = !otherParticipants.length;
+    switchType.addEventListener('click', () => {
+      const target = otherParticipants.find(item => item.id === lastSelectedByType[otherType]) || otherParticipants[0];
+      if (!target) return;
+      selectParticipant(target.id);
+      panel.querySelector('.map-switch-type').focus();
+    });
+    heading.append(switchType, navigation);
     panel.append(heading, el('h3', '', names[index]));
+    if (person.type === 'enemy' && person.distinctiveFeatures) panel.appendChild(el('p', 'map-enemy-features', person.distinctiveFeatures));
     if (person.type === 'hero') {
       const stanceLabel = el('label', 'map-panel-stance', 'Postawa');
       const stance = el('select'); stance.name = 'stance';
@@ -175,7 +202,7 @@
     const factValues = person.type === 'hero' ? [['Obrona', person.parry], ['Pancerz', person.armour], ['Obciąż.', person.load], ['Cień', person.shadow]] : [['Zajadł.', person.fierceness], ['Potęga', person.might], ['Obrona', person.parry], ['Pancerz', person.armour]];
     for (const [label, value] of factValues) { const fact = el('div'); fact.append(el('span', '', label), el('strong', '', value ?? '—')); facts.appendChild(fact); }
     panel.appendChild(facts);
-    const detail = (label, value) => { if (value == null || value === '') return; const item = el('p', 'map-panel-detail'); item.append(el('b', '', label + ': '), doc.createTextNode(String(value))); panel.appendChild(item); };
+
     if (person.type === 'hero') {
       const conditions = el('div', 'map-panel-conditions');
       for (const [label, field] of [['Wyczerpanie', 'weary'], ['Przygnębienie', 'miserable'], ['Rana', 'wounded']]) {
@@ -188,7 +215,34 @@
       injury.addEventListener('input', event => { if (!event.isComposing) saveHeroField(person, injury, 'injury', injury.value); });
       injury.addEventListener('compositionend', () => saveHeroField(person, injury, 'injury', injury.value));
       injuryLabel.appendChild(injury); panel.append(conditions, injuryLabel);
-    } else { detail('Atak', person.attack); detail('Atrybuty', person.traits); }
+    } else {
+      const wounds = el('div', 'map-enemy-wounds');
+      wounds.setAttribute('role', 'group'); wounds.setAttribute('aria-label', 'Rany przeciwnika');
+      wounds.appendChild(el('span', '', 'Rana:'));
+      Array.from({ length: Math.max(4, (person.wounds || []).length) }, (_, index) => {
+        const checked = !!person.wounds?.[index];
+        const input = el('input'); input.type = 'checkbox'; input.checked = checked;
+        input.disabled = index >= (person.wounds || []).length;
+        input.dataset.wound = index;
+        input.setAttribute('aria-label', input.disabled ? `Rana ${index + 1} — niedostępna` : `Rana ${index + 1} z ${person.wounds.length}`);
+        input.addEventListener('change', () => {
+          run(() => store.setEnemyWound(person.id, index, input.checked));
+          const replacement = panel.querySelector(`[data-wound="${index}"]`);
+          if (replacement) replacement.focus();
+        });
+        wounds.appendChild(input);
+      });
+      panel.appendChild(wounds);
+      if (detailEnemyId !== person.id) enemyDetails.open = false;
+      detailEnemyId = person.id;
+      enemyDetails.hidden = false;
+      enemyDetailBody.replaceChildren();
+      for (const [label, value] of [['Biegłości bojowe', person.attack], ['Atrybuty', person.traits]]) {
+        const block = el('div');
+        block.append(el('h3', '', label), el('p', 'map-panel-detail', value || '—'));
+        enemyDetailBody.appendChild(block);
+      }
+    }
     const defeated = el('button', 'map-panel-action', person.defeated ? 'Przywróć do walki' : person.type === 'hero' ? 'Nieprzytomny / konający' : 'Oznacz jako pokonanego');
     defeated.type = 'button'; defeated.addEventListener('click', () => { run(() => store.toggleDefeated(person.id)); const replacement = panel.querySelector('.map-panel-action'); if (replacement) replacement.focus(); }); panel.appendChild(defeated);
     const remove = el('button', 'map-panel-remove', 'Usuń z potyczki'); remove.type = 'button'; remove.addEventListener('click', () => { if (root.confirm(`Usunąć ${names[index]} z potyczki?`)) run(() => store.removeParticipant(person.id)); }); panel.appendChild(remove);
@@ -198,6 +252,7 @@
   function zoomAt(factor, x = viewport.clientWidth / 2, y = viewport.clientHeight / 2) { if (!currentMap) return; const next = clamp(zoom * factor, .1, 3); offsetX = x - (x - offsetX) * next / zoom; offsetY = y - (y - offsetY) * next / zoom; zoom = next; transform(); }
   function refresh(snapshot) {
     const map = snapshot.map, participants = store.getParticipants();
+    if (selected && !participants.some(p => p.id === selected)) selected = null;
     const key = map ? JSON.stringify([map.seed, map.scene, map.size, map.width, map.height, map.terrain]) : '';
     const terrainChanged = key !== fittedKey;
     currentMap = map;
@@ -208,9 +263,8 @@
       if (terrainChanged) { sceneInput.value = SCENES[map.scene] ? map.scene : 'clearing'; sizeInput.value = SIZES[map.size] ? map.size : 'medium'; }
       stage.style.width = map.width + 'px'; stage.style.height = map.height + 'px';
       if (terrainChanged) { paintTerrain(map); fittedKey = key; root.requestAnimationFrame(fit); }
-      if (selected && !participants.some(p => p.id === selected)) selected = null;
       renderTokens(map, participants);
-    } else { fittedKey = ''; selected = null; tokens.replaceChildren(); }
+    } else { fittedKey = ''; tokens.replaceChildren(); }
     renderPanel(participants);
   }
   doc.getElementById('map-add-heroes').addEventListener('click', () => run(() => {
@@ -229,6 +283,16 @@
   doc.getElementById('map-zoom-in').addEventListener('click', () => zoomAt(1.25));
   doc.getElementById('map-zoom-out').addEventListener('click', () => zoomAt(.8));
   doc.getElementById('map-fit').addEventListener('click', fit);
+  doc.getElementById('map-center').addEventListener('click', () => {
+    if (!currentMap || !selected) return;
+    const marker = Array.from(tokens.children).find(node => node.dataset.id === selected);
+    if (!marker) return;
+    const target = marker.querySelector('.map-token-symbol').getBoundingClientRect();
+    const bounds = viewport.getBoundingClientRect();
+    offsetX += bounds.left + viewport.clientLeft + viewport.clientWidth / 2 - (target.left + target.width / 2);
+    offsetY += bounds.top + viewport.clientTop + viewport.clientHeight / 2 - (target.top + target.height / 2);
+    transform();
+  });
   viewport.addEventListener('wheel', event => { if (!currentMap) return; event.preventDefault(); const box = viewport.getBoundingClientRect(); const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1); zoomAt(Math.exp(-clamp(pixels, -100, 100) * .0099), event.clientX - box.left, event.clientY - box.top); }, { passive: false });
   viewport.addEventListener('pointerdown', event => {
     if (!currentMap || gesture || event.button !== 0 || event.target.closest('.map-zoom-controls')) return;
@@ -253,5 +317,12 @@
   if (root.ResizeObserver) new root.ResizeObserver(() => { if (currentMap && section.classList.contains('active') && viewport.clientWidth && viewport.clientHeight && !gesture) fit(); }).observe(viewport);
   doc.addEventListener('one-ring:tab', event => { if (event.detail === 'map' || event.detail && event.detail.tab === 'map') root.requestAnimationFrame(() => { if (currentMap && viewport.clientWidth) fit(); }); });
   store.subscribe(refresh); refresh(store.getState());
-  root.OneRingMap = { generateTerrain, fit };
+  function selectParticipant(id) {
+    const participants = store.getParticipants();
+    if (!participants.some(person => person.id === id)) return;
+    selected = id;
+    if (currentMap) renderTokens(currentMap, participants);
+    renderPanel(participants);
+  }
+  root.OneRingMap = { generateTerrain, fit, selectParticipant };
 })(typeof window !== 'undefined' ? window : null);

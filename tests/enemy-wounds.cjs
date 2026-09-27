@@ -1,0 +1,67 @@
+/* Encounter wounds use isolated browser storage. */
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({headless:true, executablePath:process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(process.env.BASE_URL || 'http://127.0.0.1:8765');
+    const ids = await page.evaluate(() => {
+      const store = OneRingStore;
+      const template = store.addLibrary({name:'Troll testowy',might:2,maxEndurance:30,maxHate:5,distinctiveFeatures:'Brutalny, Nikczemny',attack:'Maczuga 3',traits:'Gruba Skóra.'});
+      const enemies = [store.addEnemy(template).id,store.addEnemy(template).id];
+      store.setMap(OneRingMap.generateTerrain('clearing','medium','wounds'));
+      return enemies;
+    });
+    await page.locator('[data-tab="map"]').click();
+    const select = id => page.evaluate(id=>OneRingMap.selectParticipant(id),id);
+    const wounds = page.locator('#map-panel [data-wound]');
+    const enemy = () => page.evaluate(id=>OneRingStore.getState().battle.find(e=>e.id===id),ids[0]);
+    await select(ids[0]);
+    const details = page.locator('#map-enemy-details');
+    assert.equal(await page.locator('#map-panel h3 + .map-enemy-features').textContent(),'Brutalny, Nikczemny');
+    assert.equal(await page.locator('#map-panel .map-panel-detail').count(),0);
+    assert.equal(await details.isVisible(),true);
+    assert.equal(await details.evaluate(node=>node.open),false);
+    await details.locator('summary').click();
+    assert.deepEqual(await details.locator('.map-panel-detail').allTextContents(),['Maczuga 3','Gruba Skóra.']);
+    assert.equal(await wounds.count(),4);
+    assert.equal(await wounds.locator('xpath=self::input[@disabled]').count(),2);
+    await wounds.nth(1).check();
+    assert.equal((await enemy()).defeated,false);
+    assert.equal(await details.evaluate(node=>node.open),true);
+    await wounds.nth(0).check();
+    assert.equal((await enemy()).defeated,true);
+    assert.equal(await page.locator('#map-panel').evaluate(n=>n.classList.contains('is-defeated')),true);
+    await page.getByRole('button',{name:'Przywróć do walki',exact:true}).click();
+    assert.deepEqual((await enemy()).wounds,[true,true]);
+    assert.equal((await enemy()).defeated,false);
+    await select(ids[1]);
+    assert.equal(await details.evaluate(node=>node.open),false);
+    assert.equal(await wounds.nth(0).isChecked(),false);
+    await select(ids[0]);
+    await page.reload();
+    await page.locator('[data-tab="map"]').click();
+    await select(ids[0]);
+    assert.deepEqual((await enemy()).wounds,[true,true]);
+    assert.equal((await enemy()).defeated,false);
+    await wounds.nth(1).uncheck();
+    assert.equal((await enemy()).defeated,false);
+    await wounds.nth(1).check();
+    assert.equal((await enemy()).defeated,true);
+    await wounds.nth(0).uncheck();
+    assert.equal((await enemy()).defeated,true);
+    await page.locator('[data-tab="opponents"]').click();
+    await page.locator('[data-category="Własne"]').click();
+    assert.equal(await page.locator('#library [data-wound], #generator [data-wound]').count(),0);
+    assert.equal(await page.evaluate(()=>Object.hasOwn(OneRingStore.getState().library[0],'wounds')),false);
+    await page.locator('.library-card .add').click();
+    assert.equal(await wounds.count(),4);
+    assert.equal(await wounds.locator('xpath=self::input[@disabled]').count(),2);
+    assert.equal(await wounds.nth(0).isChecked(),false);
+    assert.deepEqual(errors,[]);
+    console.log('Enemy wounds passed: defeat, revival, repeat wounds, persistence, independent copies and encounter-only controls.');
+  } finally { await browser.close(); }
+})().catch(error=>{console.error(error);process.exitCode=1;});

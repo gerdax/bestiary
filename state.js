@@ -29,14 +29,19 @@
     const kind = raw.kind || "Bestia";
     const maxEndurance = Math.max(0, number(raw.maxEndurance, number(raw.endurance, 0)));
     const maxHate = Math.max(0, number(raw.maxHate, number(raw.hate, 0)));
-    return Object.assign({}, raw, {
+    const result = Object.assign({}, raw, {
       id: typeof raw.id === "string" && raw.id ? raw.id : id(), kind,
       resourceType: ["hate", "determination"].includes(raw.resourceType) ? raw.resourceType : (kind === "Człowiek" ? "determination" : "hate"),
       category: raw.category || CATEGORIES[kind] || "Własne", source: raw.source === "Mój szablon" ? "Własne" : (raw.source || "Własne"),
       fierceness: number(raw.fierceness, 3), might: number(raw.might, 1), maxEndurance, maxHate,
       endurance: clamp(number(raw.endurance, maxEndurance), 0, maxEndurance),
-      hate: clamp(number(raw.hate, maxHate), 0, maxHate), defeated: battleEntry ? !!raw.defeated : !!raw.defeated
+      hate: clamp(number(raw.hate, maxHate), 0, maxHate), defeated: !!raw.defeated
     });
+    if (battleEntry) {
+      const count = clamp(Math.floor(result.might), 0, 10);
+      result.wounds = Array.from({ length: count }, (_, index) => !!(Array.isArray(raw.wounds) && raw.wounds[index]));
+    } else delete result.wounds;
+    return result;
   }
 
   function hero(raw) {
@@ -149,11 +154,12 @@
       getState: () => copy(state),
       getParticipants: () => state.battle.map(x => Object.assign({}, copy(x), { type: "enemy" })).concat(state.heroParticipants.map(p => { const h = state.heroes.find(x => x.id === p.heroId); return Object.assign({}, copy(h), { id: p.id, heroId: h.id, type: "hero" }); })),
       subscribe(fn) { if (typeof fn !== "function") throw new TypeError("Listener must be a function"); listeners.push(fn); return () => { listeners = listeners.filter(x => x !== fn); }; },
-      addEnemy(raw) { return mutate(() => { const e = enemy(raw, true); e.id = id(); e.endurance = e.maxEndurance; e.hate = e.maxHate; e.defeated = false; state.battle.push(e); return copy(e); }); },
+      addEnemy(raw) { return mutate(() => { const e = enemy(raw, true); e.id = id(); e.endurance = e.maxEndurance; e.hate = e.maxHate; e.defeated = false; e.wounds.fill(false); state.battle.push(e); return copy(e); }); },
       removeParticipant(pid) { return mutate(() => { const before = state.battle.length + state.heroParticipants.length; state.battle = state.battle.filter(x => x.id !== pid); state.heroParticipants = state.heroParticipants.filter(x => x.id !== pid); return before !== state.battle.length + state.heroParticipants.length; }); },
       clearEncounter() { return mutate(() => { state.battle = []; state.heroParticipants = []; state.map = null; }); },
       clearBattle() { return mutate(() => { state.battle = []; state.heroParticipants = []; }); },
       toggleDefeated(pid) { return mutate(() => { const e = state.battle.find(x => x.id === pid); if (e) e.defeated = !e.defeated; else { const p = state.heroParticipants.find(x => x.id === pid), h = p && state.heroes.find(x => x.id === p.heroId); if (h) h.defeated = !h.defeated; } }); },
+      setEnemyWound(pid, index, checked) { return mutate(() => { if (!Number.isInteger(index) || index < 0) throw new RangeError("Invalid enemy wound index"); if (typeof checked !== "boolean") throw new TypeError("Enemy wound value must be boolean"); const e = state.battle.find(x => x.id === pid); if (!e) return; if (index >= e.wounds.length) throw new RangeError("Invalid enemy wound index"); const newlyChecked = checked && !e.wounds[index]; e.wounds[index] = checked; if (newlyChecked && e.wounds.every(Boolean)) e.defeated = true; }); },
       adjustResource(pid, field, delta) { return mutate(() => { const e = state.battle.find(x => x.id === pid); const p = state.heroParticipants.find(x => x.id === pid); const target = e || (p && state.heroes.find(x => x.id === p.heroId)); if (!target) return; const maxima = { endurance: "maxEndurance", hate: "maxHate", hope: "maxHope" }; if (!(field in maxima) || !Number.isFinite(Number(delta)) || !(field in target)) return; target[field] = clamp(number(target[field], 0) + Number(delta), 0, number(target[maxima[field]], 0)); }); },
       reorderEnemies(ids) { return mutate(() => { if (!Array.isArray(ids) || ids.length !== state.battle.length || new Set(ids).size !== ids.length || ids.some(x => !state.battle.some(e => e.id === x))) throw new Error("Invalid enemy order"); state.battle.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)); }); },
       saveHero(data) { return mutate(() => { const input = Object.assign({}, data); const existing = input.id && state.heroes.find(x => x.id === input.id); const saved = hero(Object.assign({}, existing || {}, input, { id: existing ? existing.id : (input.id || id()) })); const index = state.heroes.findIndex(x => x.id === saved.id); if (index >= 0) state.heroes[index] = saved; else state.heroes.push(saved); return copy(saved); }); },

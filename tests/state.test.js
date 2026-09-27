@@ -176,3 +176,75 @@ test('enemy resource type survives custom kinds and backups with legacy defaults
   assert.equal(reloaded.getState().battle[0].resourceType,'determination');
   assert.equal(reloaded.getState().battle[0].hate,5);
 });
+
+test('enemy wounds defeat on the final new check and survive reload and backup', () => {
+  const disk = storage(); const store = createStore(disk);
+  const template = store.addLibrary({ name: 'Ork', might: 2, wounds: [true, true] });
+  assert.equal('wounds' in template, false);
+  const enemy = store.addEnemy({ ...template, defeated: true, wounds: [true, true] });
+  assert.deepEqual(enemy.wounds, [false, false]); assert.equal(enemy.defeated, false);
+  const events = []; store.subscribe(snapshot => events.push(snapshot));
+  store.setEnemyWound(enemy.id, 0, true);
+  assert.deepEqual(store.getState().battle[0].wounds, [true, false]);
+  assert.equal(store.getState().battle[0].defeated, false);
+  store.setEnemyWound(enemy.id, 1, true);
+  assert.deepEqual(events.at(-1).battle[0].wounds, [true, true]);
+  assert.equal(events.at(-1).battle[0].defeated, true);
+  assert.deepEqual(createStore(disk).getState().battle[0].wounds, [true, true]);
+  store.toggleDefeated(enemy.id);
+  assert.equal(store.getState().battle[0].defeated, false);
+  store.setEnemyWound(enemy.id, 1, true);
+  assert.equal(store.getState().battle[0].defeated, false);
+  const backup = store.exportBackup();
+  const restored = createStore(storage()); restored.restoreBackup(backup);
+  assert.deepEqual(restored.exportBackup(), backup);
+  assert.equal(createStore(disk).getState().battle[0].defeated, false);
+  store.setEnemyWound(enemy.id, 0, false);
+  assert.equal(store.getState().battle[0].defeated, false);
+  store.setEnemyWound(enemy.id, 0, true);
+  assert.equal(store.getState().battle[0].defeated, true);
+});
+
+test('enemy wound normalization covers legacy storage, copies, and library stripping', () => {
+  const legacy = storage({
+    'one-ring-battle': JSON.stringify([{ id: 'old', name: 'Old', might: 2.9 }, { id: 'zero', name: 'Zero', might: 0, wounds: [true] }, { id: 'huge', name: 'Huge', might: 1000000000, wounds: [true] }]),
+    'one-ring-library': JSON.stringify([{ id: 'template', name: 'Template', might: 3, wounds: [true] }])
+  });
+  const migrated = createStore(legacy).getState();
+  assert.deepEqual(migrated.battle[0].wounds, [false, false]);
+  assert.deepEqual(migrated.battle[1].wounds, []);
+  assert.equal(migrated.battle[2].might, 1000000000);
+  assert.deepEqual(migrated.battle[2].wounds, [true, false, false, false, false, false, false, false, false, false]);
+  assert.equal('wounds' in migrated.library[0], false);
+  assert.equal(legacy.data['one-ring-state'], undefined);
+  const disk = storage(); const store = createStore(disk);
+  const copied = store.addEnemy({ ...migrated.battle[0], wounds: [true, true], defeated: true });
+  assert.deepEqual(copied.wounds, [false, false]);
+  store.addLibrary({ name: 'New', wounds: [true] });
+  store.importLibrary([{ name: 'Imported', might: 1000000000, wounds: [true] }]);
+  assert.ok(store.getState().library.every(item => !('wounds' in item)));
+  const imported = store.getState().library.find(item => item.name === 'Imported');
+  assert.equal(imported.might, 1000000000);
+  const importedCopy = store.addEnemy(imported);
+  assert.equal(importedCopy.wounds.length, 10);
+  assert.ok(importedCopy.wounds.every(checked => !checked));
+  const backup = store.exportBackup();
+  backup.battle[0].wounds = [true];
+  backup.library[0].wounds = [true];
+  store.restoreBackup(backup);
+  assert.deepEqual(store.getState().battle[0].wounds, [true, false]);
+  assert.equal('wounds' in store.getState().library[0], false);
+});
+
+test('setEnemyWound rejects invalid values and cannot alter a hero', () => {
+  const disk = storage(); const store = createStore(disk);
+  const enemy = store.addEnemy({ name: 'Ork', might: 1 });
+  const hero = store.saveHero({ name: 'Sam', wounded: true }); store.addHero(hero.id);
+  const before = store.exportBackup();
+  for (const index of [-1, 1, 0.5, NaN, '0']) assert.throws(() => store.setEnemyWound(enemy.id, index, true), RangeError);
+  for (const checked of [1, 'true', null, undefined]) assert.throws(() => store.setEnemyWound(enemy.id, 0, checked), TypeError);
+  assert.deepEqual(store.exportBackup(), before);
+  store.setEnemyWound('hero:' + hero.id, 0, true);
+  assert.deepEqual(store.getState().heroes, before.heroes);
+  assert.equal(store.getState().heroes[0].wounded, true);
+});

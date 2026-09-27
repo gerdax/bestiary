@@ -13,7 +13,7 @@ is malformed, `loadError` explains the startup problem and normal mutations are
 blocked; call `restoreBackup(validBackup)` to explicitly recover it.
 
 Battle and library methods are `addEnemy`, `removeParticipant`, `clearBattle`,
-`clearEncounter`, `toggleDefeated`, `adjustResource`, `reorderEnemies`, `addLibrary`,
+`clearEncounter`, `toggleDefeated`, `setEnemyWound`, `adjustResource`, `reorderEnemies`, `addLibrary`,
 `removeLibrary`, and `importLibrary`. Enemy battle entries retain the legacy
 fields (`endurance`, `maxEndurance`, `hate`, `maxHate`, `defeated`, and combat
 metadata). `importLibrary(data)` accepts an array or `{library}` and returns the
@@ -73,3 +73,14 @@ values display as empty. `kind` is free text and is displayed with the source.
 Enemy `resourceType` is `hate` or `determination`, independent of free-text `kind`.
 Old records default to determination for `Człowiek`, otherwise hate. The numeric
 resource remains in `hate`/`maxHate`; the backup version remains 2.
+
+Battle enemies have `wounds`, a boolean array with `clamp(floor(might), 0, 10)`
+entries. Existing `might` values remain unchanged when outside that range.
+Older battle records without wounds receive unchecked entries on load or restore;
+library records never retain `wounds`. `addEnemy` starts with all wounds unchecked,
+including when copying a wounded library or battle record. `setEnemyWound(id, index,
+checked)` requires an integer index within that enemy's wounds and a boolean value.
+Checking the last unchecked wound sets `defeated` to true in the same state update.
+Unchecking a wound never revives the enemy. `toggleDefeated` changes only `defeated`,
+so a manually revived enemy can retain all checked wounds through reload and backup
+restore; checking an already checked wound does not defeat it again.

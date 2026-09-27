@@ -68,7 +68,10 @@
 .map-panel-detail { margin: 9px 0; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-line; }
 .map-panel-detail b { color: var(--ink); }
 .map-panel-action, .map-panel-remove { display: block; width: 100%; margin-top: 9px; padding: 9px; border: 1px solid #c9a897; background: transparent; color: var(--clay); cursor: pointer; font: 600 13px Georgia, serif; }
-.map-panel-remove { margin-top: 16px; padding-top: 17px; border-width: 1px 0 0; border-color: var(--clay); color: var(--muted); text-decoration: underline; }
+.map-panel-remove { margin-top: 16px; padding-top: 17px; border-width: 1px 0 0; border-color: var(--clay); color: var(--clay); text-decoration: underline; }
+.map-panel.is-defeated > :not(.map-panel-action):not(.map-panel-remove) { filter: grayscale(1); opacity: .55; }
+.map-enemy-wounds { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 0; color: var(--clay); font: 600 14px Georgia, serif; }
+.map-enemy-wounds input { flex: 0 0 22px; width: 22px; height: 22px; margin: 0; padding: 0; accent-color: var(--clay); cursor: pointer; }
 .map-hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 @media (max-width: 760px) { .map-layout { grid-template-columns: 1fr; } .map-viewport { min-height: 360px; height: min(70vw, 510px); } .map-panel { min-height: 130px; } .map-toolbar { align-items: end; } .map-heading-note { display: none; } }
 @media (max-width: 480px) { .map-toolbar label { min-width: 105px; flex-basis: 105px; } .map-toolbar .primary { flex: 1 1 100%; } }
@@ -84,3 +87,23 @@
 
 .map-heading-actions { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: flex-end; }
 #map .map-heading { flex-wrap: wrap; }
+
+.map-enemy-wounds input:disabled { opacity: .6; filter: grayscale(1); cursor: not-allowed; }
+
+.map-enemy-features { margin: 8px 0 0; color: var(--muted); font: 13px Georgia, serif; }
+.map-enemy-details { --sheet-red: #ae4c3d; margin: 24px 0 0; padding: 26px; background: #fffdf8; border-top: 1px solid var(--sheet-red); box-shadow: 0 4px 18px rgb(93 75 59 / .06); }
+.map-enemy-details:not([open]) { margin-bottom: 0; }
+.map-enemy-details > summary { padding: 0; display: flex; align-items: center; }
+@media (max-width: 760px) { .map-enemy-details { padding: 18px; } }
+.map-enemy-details[hidden] { display: none; }
+.map-enemy-detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 12px 0; }
+.map-enemy-detail-body h3 { margin: 0; color: var(--clay); font: 600 18px Fraunces, Georgia, serif; }
+.map-enemy-detail-body .map-panel-detail { font-size: 15px; }
+@media (max-width: 680px) { .map-enemy-detail-body { grid-template-columns: 1fr; gap: 12px; } }
+
+.map-center-controls { left: 12px; right: auto; }
+.map-center-controls button { display: grid; place-items: center; }
+.map-center-controls button:disabled { opacity: .45; cursor: default; }
+
+.map-panel-heading .map-switch-type { width: auto; height: auto; min-height: 32px; padding: 0; border: 0; background: transparent; text-align: left; font: 500 11px 'DM Mono', monospace; letter-spacing: .08em; }
+.map-switch-type:not(:disabled):hover { text-decoration: underline; }
