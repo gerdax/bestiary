@@ -447,7 +447,7 @@
       panel.querySelector('.map-switch-type').focus();
     });
     heading.append(switchType, navigation);
-    panel.append(heading, el('h3', '', names[index]));
+    panel.append(heading, el('h3', person.type === 'hero' ? '' : 'map-enemy-name', names[index]));
     if (person.type === 'enemy' && person.distinctiveFeatures) panel.appendChild(el('p', 'map-enemy-features', person.distinctiveFeatures));
     if (person.type === 'hero') {
       const stanceLabel = el('label', 'map-panel-stance', 'Postawa');
@@ -625,7 +625,12 @@
     touchGesture = { ids: [a[0], b[0]], distance: Math.max(1, Math.hypot(a[1].x - b[1].x, a[1].y - b[1].y)), zoom, mapX: (midpointX - offsetX) / zoom, mapY: (midpointY - offsetY) / zoom };
   }
   viewport.addEventListener('pointerdown', event => {
-    if (!currentMap || event.button !== 0 || event.target.closest('.map-zoom-controls')) return;
+    if (event.button !== 0) return;
+    if (event.target.closest('.map-zoom-controls')) {
+      if (event.pointerType === 'touch' && !touchPoints.size) suppressTouchClick = false;
+      return;
+    }
+    if (!currentMap) return;
     if (event.pointerType === 'touch') {
       if (!touchPoints.size) suppressTouchClick = false;
       touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });

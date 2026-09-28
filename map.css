@@ -43,6 +43,7 @@
 .map-panel-heading button { width: 32px; height: 32px; border: 1px solid var(--line); background: #fffdf8; color: var(--clay); cursor: pointer; font: 24px Georgia, serif; line-height: 1; }
 .map-panel-heading button:disabled { opacity: .4; cursor: default; }
 .map-panel h3 { overflow-wrap: anywhere; margin: 0 0 18px; font-size: 24px; line-height: 1.1; }
+.map-panel > .map-enemy-name { color: var(--clay); }
 .map-panel-stance, .map-panel-injury { display: grid; gap: 5px; color: var(--clay); font: 700 10px 'DM Mono', monospace; text-transform: uppercase; }
 .map-panel-stance select, .map-panel-injury input { width: 100%; min-width: 0; padding: 8px 9px; border: 1px solid var(--line); background: #fffdf8; color: var(--ink); font: 13px Georgia, serif; text-transform: none; }
 .map-panel-conditions { display: grid; gap: 8px; margin: 0 0 15px; padding-top: 16px; border-top: 1px solid var(--clay); }
