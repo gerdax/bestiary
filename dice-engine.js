@@ -10,10 +10,10 @@
     })]).finally(() => clearTimeout(timer));
   }
   function visualScale(container) {
-    // The full-window canvas magnifies the fixed camera too. Compensate so dice
-    // are twice their former on-screen size, rather than doubling that magnification.
-    const formerTray = container.parentElement.querySelector('.dice-table');
-    return Number(container.dataset.visualScale) || 10 * formerTray.clientHeight / container.clientHeight;
+    // The fixed camera projects world units proportionally to canvas CSS height.
+    // Keep scale × height constant (~60 CSS px per die), independent of the sheet,
+    // window height and device pixel ratio. Physics and meshes receive the same scale.
+    return (4400 / 1.5) / Math.max(1, container.clientHeight);
   }
   async function init(container) {
     if (box) return box;

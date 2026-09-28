@@ -105,11 +105,6 @@
     }
     setup.querySelector('.dice-roll').disabled = !!pending;
     const settings = setup.querySelector('#dice-settings');
-    // Measure the expanded layout so folding the form never changes 3D die size.
-    if (dialog.open && !setup.hidden) {
-      settings.hidden = false;
-      stage.dataset.visualScale = 10 * dialog.querySelector('.dice-table').clientHeight / stage.clientHeight;
-    }
     settings.hidden = collapsed;
     setup.classList.toggle('is-compact', collapsed);
     const toggle = dialog.querySelector('.dice-collapse');

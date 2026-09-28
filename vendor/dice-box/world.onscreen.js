@@ -178,10 +178,11 @@ class Lt {
   }
 }
 function _i(f) {
+  // Local fix: render at device resolution instead of stretching CSS-sized pixels on Retina.
   return new W(f, !0, {
     preserveDrawingBuffer: !0,
     stencil: !0
-  });
+  }, !0);
 }
 class Te {
   /**

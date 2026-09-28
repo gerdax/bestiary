@@ -2,9 +2,11 @@
 
 Vendored browser distribution of `@3d-dice/dice-box` 1.1.4 from
 https://registry.npmjs.org/@3d-dice/dice-box/-/dice-box-1.1.4.tgz.
-WASM and JavaScript are upstream except one documented fix in `world.onscreen.js`:
+WASM and JavaScript are upstream except two documented fixes in `world.onscreen.js`:
 `resize()` delegates buffer sizing to Babylon, invalidates GPU caches and renders a frame,
 so settled dice remain visible after resizing the bottom sheet. Zero-size hidden trays are ignored.
+The Babylon engine enables `adaptToDeviceRatio` so its drawing buffer follows the screen
+pixel density (including Retina), while layout and physics continue using CSS pixels.
 Source maps and unused minified duplicates are omitted.
 MIT license: `LICENSE`. Upstream models/textures: CC0, per
 https://fantasticdice.games/docs/themes.

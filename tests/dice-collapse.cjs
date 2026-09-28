@@ -12,11 +12,9 @@ const { chromium } = require('playwright');
       assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
       await page.locator('[data-choice="baseDice"] [data-value="2"]').click();
       const expanded = await page.locator('.dice-sheet').evaluate(n => n.offsetHeight);
-      const scale = await page.locator('#dice-stage').getAttribute('data-visual-scale');
       await toggle.click();
       assert.equal(await page.locator('#dice-settings').isVisible(), false);
       assert.ok(await page.locator('.dice-sheet').evaluate(n => n.offsetHeight) < expanded - 150);
-      assert.equal(await page.locator('#dice-stage').getAttribute('data-visual-scale'), scale);
       assert.match(await page.locator('.dice-pool').innerText(), /2 × kość sukcesu/);
       await page.screenshot({ path: `/tmp/dice-compact-${width}.png` });
       await page.locator('.dice-roll').click();
@@ -44,6 +42,6 @@ const { chromium } = require('playwright');
       assert.equal(await page.locator('.dice-result').isVisible(), false);
       await page.close();
     }
-    console.log('Compact setup: state across rolls, reopen reset, unchanged scale, invalid PT and mobile passed.');
+    console.log('Compact setup: state across rolls, reopen reset, invalid PT and mobile passed.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
