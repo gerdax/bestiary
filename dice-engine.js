@@ -27,9 +27,9 @@
         container: '#' + container.id, id: 'tor-dice-canvas',
         origin: base.origin, assetPath: new URL('assets/', base).pathname,
         theme: 'tor-hero', themeColor: '#efe0bf',
-        offscreen: false, scale: visualScale(container), settleTimeout: 2500,
-        mass: 2, gravity: 1.5, friction: 0.95, restitution: 0.05,
-        angularDamping: 0.7, linearDamping: 0.6, spinForce: 3, throwForce: 4,
+        offscreen: false, scale: visualScale(container), settleTimeout: 2000,
+        mass: 2.4, gravity: 2.3, friction: 0.95, restitution: 0.05,
+        angularDamping: 0.78, linearDamping: 0.68, spinForce: 3, throwForce: 4,
         enableShadows: true, lightIntensity: 1.2,
         suspendSimulation: false
       });

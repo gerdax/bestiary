@@ -18,7 +18,7 @@
       <div class="dice-dialog-layout">
         <div class="dice-table" aria-hidden="true"></div>
         <section class="dice-sheet" aria-live="polite">
-          <div class="dice-sheet-head"><h2 id="dice-heading">Rzut</h2><div class="dice-head-actions"><button type="button" class="dice-collapse" aria-label="Zwiń ustawienia rzutu" aria-expanded="true" aria-controls="dice-settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button><button type="button" class="dice-close" aria-label="Zamknij rzut">×</button></div></div>
+          <div class="dice-sheet-head"><h2><button type="button" class="dice-collapse" aria-label="Zwiń ustawienia rzutu" aria-expanded="true" aria-controls="dice-settings"><span id="dice-heading">Rzut</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h2><button type="button" class="dice-close" aria-label="Zamknij rzut">×</button></div>
           <div class="dice-setup">
             <div id="dice-settings" class="dice-settings">
             <fieldset class="dice-field"><legend>Kto rzuca?</legend><div class="dice-options" data-choice="actor"><button type="button" data-value="hero">Bohater</button><button type="button" data-value="enemy">Wróg</button></div></fieldset>
@@ -44,9 +44,9 @@
     launch.addEventListener('click', open);
     dialog.querySelector('.dice-close').addEventListener('click', close);
     dialog.querySelector('.dice-collapse').addEventListener('click', () => {
-      if (pending || setup.hidden) return;
+      if (pending) return;
       collapsed = !collapsed;
-      renderSetup();
+      renderCollapse();
     });
     dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
     dialog.addEventListener('click', event => {
@@ -104,14 +104,22 @@
       preview.append(die);
     }
     setup.querySelector('.dice-roll').disabled = !!pending;
+    renderCollapse();
+  }
+
+  function renderCollapse() {
     const settings = setup.querySelector('#dice-settings');
     settings.hidden = collapsed;
     setup.classList.toggle('is-compact', collapsed);
     const toggle = dialog.querySelector('.dice-collapse');
-    toggle.hidden = setup.hidden;
+    const groups = resultPanel.querySelector('.dice-result-groups');
+    if (groups) groups.hidden = collapsed;
+    resultPanel.classList.toggle('is-compact', collapsed);
+    toggle.setAttribute('aria-controls', setup.hidden ? 'dice-result-details' : 'dice-settings');
     toggle.disabled = !!pending;
     toggle.setAttribute('aria-expanded', String(!collapsed));
-    toggle.setAttribute('aria-label', collapsed ? 'Rozwiń ustawienia rzutu' : 'Zwiń ustawienia rzutu');
+    const details = setup.hidden ? 'szczegóły wyniku' : 'ustawienia rzutu';
+    toggle.setAttribute('aria-label', `${collapsed ? 'Rozwiń' : 'Zwiń'} ${details}`);
   }
 
   function resizeStage() {
@@ -217,7 +225,7 @@
       resizeStage();
       setup.querySelector('.dice-roll').focus();
     });
-    const groups = element('<div class="dice-result-groups"></div>');
+    const groups = element('<div id="dice-result-details" class="dice-result-groups"></div>');
     const featGroup = element('<section class="dice-result-group" aria-label="Kość działania"></section>');
     const successGroup = element('<section class="dice-result-group" aria-label="Kości sukcesu"></section>');
     featGroup.append(featTitle, featRow);
@@ -227,7 +235,7 @@
     setup.hidden = true;
     resultPanel.hidden = false;
     dialog.querySelector('#dice-heading').textContent = 'Wynik';
-    dialog.querySelector('.dice-collapse').hidden = true;
+    renderCollapse();
     again.focus();
   }
 

@@ -178,9 +178,10 @@ class Lt {
   }
 }
 function _i(f) {
-  // Local fix: render at device resolution instead of stretching CSS-sized pixels on Retina.
+  // Local fix: supersample on Retina, capped to avoid a full-screen 4–9× pixel cost.
   return new W(f, !0, {
     preserveDrawingBuffer: !0,
+    limitDeviceRatio: 1.5,
     stencil: !0
   }, !0);
 }
@@ -633,8 +634,9 @@ class Ft {
 function vi(f) {
   const { engine: e } = f, t = new lt(e);
   t.clearColor = new Xe(0, 0, 0, 0), t.pointerMovePredicate = () => !1, t.pointerDownPredicate = () => !1, t.pointerUpPredicate = () => !1, t.clearCachedVertexData(), t.themeData = {};
-  const i = be.LowDegradationAllowed();
-  return i.optimizations = i.optimizations.splice(1), i.targetFrameRate = 60, Ft.OptimizeAsync(t, i), t;
+  // Local fix: the upstream optimizer permanently disables shadows after a slow
+  // frame sample (including startup). Bound render resolution instead.
+  return t;
 }
 class j extends se {
   /**
@@ -13113,7 +13115,12 @@ class da {
     const t = e.width, i = e.height;
     if (!t || !i) return;
     // Local fix: let Babylon own the canvas buffer resize and invalidate GPU caches.
-    C(this, Qe).create({ aspect: t / i }), C(this, oe).resize(true);
+    C(this, Qe).create({ aspect: t / i });
+    // Reapply the cap when moving between displays with different pixel density.
+    const engine = C(this, oe);
+    engine.adaptToDeviceRatio = false;
+    engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 1.5));
+    engine.resize(true);
     C(this, oe).wipeCaches(true);
     // Settled worlds stop their render loop; repaint after resizing.
     C(this, K).render();

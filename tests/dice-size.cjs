@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
         return { projectionScale: testDiceScale * c.clientHeight, bufferWidth: c.width, cssWidth: c.clientWidth };
       });
       assert.ok(Math.abs(measurement.projectionScale - 4400 / 1.5) < .001);
-      assert.equal(measurement.bufferWidth, width * dpr);
+      assert.equal(measurement.bufferWidth, Math.floor(width * Math.min(dpr, 1.5)));
       assert.deepEqual(errors, []);
       await page.screenshot({ path: `/tmp/dice-size-${width}-${height}.png` });
       console.log({ width, height, dpr, compact, ...measurement });
