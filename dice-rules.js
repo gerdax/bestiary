@@ -10,8 +10,9 @@
   function calculatePool(config) {
     const base = clamp(Number(config.baseDice) || 0, 0, 6);
     const bonus = clamp(Number(config.bonus) || 0, -6, 6);
-    const hope = config.actor !== 'enemy' && config.hope ? (config.inspired ? 2 : 1) : 0;
-    return clamp(base + bonus + hope, 0, 14);
+    const resource = config.actor === 'enemy' ? (config.enemyResource ? 1 : 0) :
+      (config.hope ? (config.inspired ? 2 : 1) : 0);
+    return clamp(base + bonus + resource, 0, 14);
   }
 
   function featValue(actor, face) {

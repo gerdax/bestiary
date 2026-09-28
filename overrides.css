@@ -404,6 +404,10 @@ textarea {
 }
 
 .tabs { flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .tabs { gap: 4px; }
+  .tabs .tab { padding-inline: 8px; font-size: 15px; white-space: nowrap; }
+}
 .backup-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 #hero-battle-list:not(:empty) { margin-bottom: 16px; }
 .storage-warning { padding: 16px; border: 2px solid var(--clay); }

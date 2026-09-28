@@ -32,8 +32,10 @@ body:has(.map-viewport.is-fullscreen) .dice-launch, body:has(:fullscreen) .dice-
 .dice-checks, .dice-hope { display: flex; flex-wrap: wrap; gap: 7px 19px; }
 .dice-checks label, .dice-hope label { display: inline-flex; align-items: center; gap: 6px; width: auto; color: #493a2d; font: 600 13px Manrope, sans-serif; letter-spacing: 0; cursor: pointer; }
 .dice-checks input, .dice-hope input { width: 18px; height: 18px; margin: 0; accent-color: #60483a; }
-.dice-dialog[data-actor="enemy"] .dice-hope, .dice-dialog[data-actor="enemy"] .dice-miserable { visibility: hidden; }
-.dice-hope label span { color: #865730; font-size: 11px; }
+.dice-dialog[data-actor="enemy"] .dice-miserable { visibility: hidden; }
+.dice-hope label span:not(.dice-spend-text) { color: #865730; font-size: 11px; }
+.dice-enemy-resource { max-width: 100%; }
+.dice-enemy-resource .dice-spend-text { min-width: 0; overflow-wrap: anywhere; }
 .dice-dialog [hidden] { display: none !important; }
 .dice-lower { display: flex; align-items: end; gap: 18px; }
 .dice-bonus { min-width: 136px; }

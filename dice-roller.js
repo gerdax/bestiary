@@ -2,7 +2,7 @@
   'use strict';
 
   const config = { actor: 'hero', baseDice: 0, featMode: 'normal', exhausted: false,
-    miserable: false, bonus: 0, hope: false, inspired: false, target: '' };
+    miserable: false, bonus: 0, hope: false, inspired: false, enemyResource: false, target: '' };
   let dialog, launch, setup, resultPanel, stage, opener, pending = null, generation = 0, collapsed = false;
 
   function element(html) {
@@ -27,7 +27,7 @@
             <div class="dice-checks"><label><input type="checkbox" data-check="exhausted"> Wyczerpany</label><label class="dice-miserable"><input type="checkbox" data-check="miserable"> Przygnębiony</label></div>
             <div class="dice-lower"><div class="dice-bonus"><span>Premia / kara</span><div class="dice-stepper"><button type="button" data-step="-1" aria-label="Zmniejsz premię">−</button><output class="dice-bonus-value">0k</output><button type="button" data-step="1" aria-label="Zwiększ premię">+</button></div></div>
               <label class="dice-target">PT <span>(opcjonalnie)</span><input type="number" min="0" step="1" inputmode="numeric" data-target></label></div>
-            <div class="dice-hope"><label><input type="checkbox" data-check="hope"> Wydaj Nadzieję <span>+1k</span></label><label class="dice-inspired"><input type="checkbox" data-check="inspired"> Natchniony <span>→ +2k</span></label></div>
+            <div class="dice-hope"><label class="dice-hero-resource"><input type="checkbox" data-check="hope"> Wydaj Nadzieję <span>+1k</span></label><label class="dice-enemy-resource" hidden><input type="checkbox" data-check="enemyResource"><span class="dice-spend-text">Wydaj Nienawiść/Determinację</span><span>+1k</span></label><label class="dice-inspired"><input type="checkbox" data-check="inspired"> Natchniony <span>→ +2k</span></label></div>
             </div>
             <div class="dice-pool" role="status"></div><div class="dice-preview" aria-hidden="true"></div>
             <p class="dice-error" role="alert" hidden></p><button type="button" class="dice-roll">Rzuć</button>
@@ -82,8 +82,9 @@
     });
     setup.querySelectorAll('[data-check]').forEach(input => { input.checked = !!config[input.dataset.check]; });
     setup.querySelector('.dice-miserable').inert = config.actor === 'enemy';
-    setup.querySelector('.dice-hope').inert = config.actor === 'enemy';
-    setup.querySelector('.dice-inspired').hidden = !config.hope;
+    setup.querySelector('.dice-hero-resource').hidden = config.actor === 'enemy';
+    setup.querySelector('.dice-enemy-resource').hidden = config.actor !== 'enemy';
+    setup.querySelector('.dice-inspired').hidden = config.actor === 'enemy' || !config.hope;
     setup.querySelector('[data-target]').value = config.target;
     setup.querySelector('.dice-bonus-value').textContent = `${config.bonus > 0 ? '+' : ''}${config.bonus}k`;
     setup.querySelectorAll('button, input').forEach(control => { control.disabled = !!pending; });
@@ -94,8 +95,9 @@
     setup.querySelector('.dice-pool').textContent = `Pula: ${featCount} × kość działania · ${pool} × kość sukcesu`;
     const preview = setup.querySelector('.dice-preview');
     preview.replaceChildren();
-    // Reserve the hero's preview slots too, so Hope never changes row wrapping on actor switch.
-    const previewSlots = Math.max(pool, root.DiceRules.calculatePool({ ...config, actor: 'hero' }));
+    // Reserve both actors' preview slots so switching actors does not change row wrapping.
+    const previewSlots = Math.max(pool, root.DiceRules.calculatePool({ ...config, actor: 'hero' }),
+      root.DiceRules.calculatePool({ ...config, actor: 'enemy' }));
     for (let i = 0; i < featCount + previewSlots; i++) {
       const die = document.createElement('span');
       die.className = `dice-preview-die ${i < featCount ? 'dice-feat' : 'dice-success'}`;

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const rules = require('../dice-rules.js');
 
 const setup = (changes = {}) => ({ actor: 'hero', baseDice: 3, bonus: 0,
-  hope: false, inspired: false, featMode: 'normal', exhausted: false,
+  hope: false, inspired: false, enemyResource: false, featMode: 'normal', exhausted: false,
   miserable: false, target: '', ...changes });
 
 test('pool uses Hope and Inspiration once and clamps to physical bounds', () => {
@@ -11,6 +11,17 @@ test('pool uses Hope and Inspiration once and clamps to physical bounds', () => 
   assert.equal(rules.calculatePool(setup({ baseDice: 6, bonus: 6, hope: true, inspired: true })), 14);
   assert.equal(rules.calculatePool(setup({ baseDice: 3, hope: true, inspired: true })), 5);
   assert.equal(rules.calculatePool(setup({ actor: 'enemy', hope: true, inspired: true })), 3);
+  assert.equal(rules.calculatePool(setup({ actor: 'enemy', enemyResource: true })), 4);
+  assert.equal(rules.calculatePool(setup({ actor: 'enemy', enemyResource: true, hope: true, inspired: true })), 4);
+  assert.equal(rules.calculatePool(setup({ enemyResource: true })), 3);
+});
+
+test('enemy spending requires exactly one additional success die in the roll', () => {
+  const config = setup({ actor: 'enemy', baseDice: 1, enemyResource: true, inspired: true });
+  const result = rules.interpretRoll(config, { feat: [7], success: [4, 5] });
+  assert.equal(result.pool, 2);
+  assert.equal(result.successDice.length, 2);
+  assert.throws(() => rules.interpretRoll(config, { feat: [7], success: [4] }), TypeError);
 });
 
 test('favoured hero chooses Gandalf over ten and succeeds automatically', () => {
