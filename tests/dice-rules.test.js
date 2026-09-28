@@ -55,8 +55,8 @@ test('Gandalf adds no numeric value to the total while preserving automatic succ
   assert.equal(result.passed, true);
 });
 
-test('without PT no success or failure verdict is returned', () => {
-  const result = rules.interpretRoll(setup({ baseDice: 0 }), { feat: [12], success: [] });
+test('without PT ordinary dice have no success or failure verdict', () => {
+  const result = rules.interpretRoll(setup({ baseDice: 0 }), { feat: [7], success: [] });
   assert.equal(result.target, null);
   assert.equal(result.passed, null);
 });
@@ -65,4 +65,15 @@ test('rejects engine output that differs from requested physical dice', () => {
   assert.throws(() => rules.interpretRoll(setup({ baseDice: 1 }), { feat: [3], success: [] }), TypeError);
   assert.throws(() => rules.interpretRoll(setup({ baseDice: 0 }), { feat: [13], success: [] }), TypeError);
   assert.throws(() => rules.interpretRoll(setup({ baseDice: 0, target: -1 }), { feat: [3], success: [] }), TypeError);
+});
+
+
+test('automatic success without PT follows the actor and only the selected feat die', () => {
+  for (const [actor, symbol, otherSymbol] of [['hero', 12, 11], ['enemy', 11, 12]]) {
+    const config = setup({ actor, baseDice: 0 });
+    assert.equal(rules.interpretRoll(config, { feat: [symbol], success: [] }).passed, true);
+    assert.equal(rules.interpretRoll(config, { feat: [otherSymbol], success: [] }).passed, null);
+    assert.equal(rules.interpretRoll({ ...config, featMode: 'weary' }, { feat: [symbol, 7], success: [] }).passed, null);
+    assert.equal(rules.interpretRoll({ ...config, featMode: 'favoured' }, { feat: [7, symbol], success: [] }).passed, true);
+  }
 });

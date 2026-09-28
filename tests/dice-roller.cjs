@@ -15,18 +15,25 @@ const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8765';
     const before = await page.evaluate(() => JSON.stringify(localStorage));
     async function assertDiceVisible(actor) {
       const png = await page.locator('#dice-stage').screenshot({path: path.join(process.env.SCREENSHOT_DIR || '/tmp', `dice-${actor}-tray.png`)});
-      const pixels = await page.evaluate(async ({ data, actor }) => {
-        const img = new Image(); img.src = 'data:image/png;base64,' + data; await img.decode();
-        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
-        const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      // The canvas now covers the result panel too: compare against the same UI
+      // with only the transparent rendering layer hidden, rather than counting cream pixels.
+      await page.locator('#dice-stage canvas').evaluate(n => { n.style.visibility = 'hidden'; });
+      const background = await page.locator('#dice-stage').screenshot();
+      await page.locator('#dice-stage canvas').evaluate(n => { n.style.visibility = ''; });
+      const pixels = await page.evaluate(async ({ data, background }) => {
+        async function decode(data) {
+          const img = new Image(); img.src = 'data:image/png;base64,' + data; await img.decode();
+          const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+          const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
+          return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        }
+        const [rgba, base] = await Promise.all([decode(data), decode(background)]);
         let count = 0;
         for (let i = 0; i < rgba.length; i += 4) {
-          const [r, g, b] = rgba.slice(i, i + 3);
-          if (actor === 'hero' ? Math.min(r, g, b) > 145 : r < 85 && b >= g && g >= r - 5) count++;
+          if (Math.abs(rgba[i] - base[i]) + Math.abs(rgba[i+1] - base[i+1]) + Math.abs(rgba[i+2] - base[i+2]) > 45) count++;
         }
         return count;
-      }, { data: png.toString('base64'), actor });
+      }, { data: png.toString('base64'), background: background.toString('base64') });
       assert.ok(pixels > 100, `${actor} dice must remain visible after settling (${pixels} pixels)`);
     }
 
@@ -38,6 +45,16 @@ const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8765';
       assert.equal(await page.locator('.dice-launch').evaluate(n => n === document.activeElement), true);
     }
     await page.locator('.dice-launch').click();
+    const layer = await page.locator('#dice-stage').evaluate(n => ({
+      height: n.getBoundingClientRect().height,
+      viewport: window.innerHeight,
+      z: Number(getComputedStyle(n).zIndex),
+      sheetZ: Number(getComputedStyle(document.querySelector('.dice-sheet')).zIndex),
+      pointerEvents: getComputedStyle(n).pointerEvents
+    }));
+    assert.equal(layer.height, layer.viewport);
+    assert.ok(layer.z > layer.sheetZ);
+    assert.equal(layer.pointerEvents, 'none');
     await page.locator('[data-choice="baseDice"] [data-value="3"]').click();
     await page.locator('[data-choice="featMode"] [data-value="favoured"]').click();
     await page.locator('[data-check="hope"]').check();
@@ -49,7 +66,7 @@ const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8765';
     await page.locator('.dice-result:not([hidden])').waitFor({ timeout: 40000 });
     assert.equal(await page.locator('.dice-result-row').nth(0).locator('.dice-result-die').count(), 2);
     assert.equal(await page.locator('.dice-result-row').nth(1).locator('.dice-result-die').count(), 6);
-    assert.match(await page.locator('.dice-verdict').innerText(), /PT 16/);
+    assert.match(await page.locator('.dice-total').innerText(), /\/16$/);
     assert.equal(await page.locator('#dice-stage canvas').count(), 1);
     await page.waitForTimeout(400); // let the tray resize finish before the visual snapshot
     await assertDiceVisible('hero');
@@ -61,7 +78,8 @@ const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8765';
     await page.locator('[data-target]').fill('');
     await page.locator('.dice-roll').click();
     await page.locator('.dice-result:not([hidden])').waitFor({ timeout: 40000 });
-    assert.equal(await page.locator('.dice-verdict').count(), 0);
+    const autoSuccess = (await page.locator('.dice-result-row').first().locator('.dice-result-die:not(.is-unused)').getAttribute('aria-label')).includes('Oko Saurona');
+    assert.equal(await page.locator('.dice-verdict').count(), autoSuccess ? 1 : 0);
     assert.equal(await page.locator('.dice-result-row').nth(1).locator('.dice-result-die').count(), 4);
     await page.waitForTimeout(400);
     await assertDiceVisible('enemy');

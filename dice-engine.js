@@ -9,6 +9,12 @@
       timer = setTimeout(() => reject(new Error('Silnik kości nie odpowiedział. Zamknij panel i odśwież stronę, aby spróbować ponownie.')), milliseconds);
     })]).finally(() => clearTimeout(timer));
   }
+  function visualScale(container) {
+    // The full-window canvas magnifies the fixed camera too. Compensate so dice
+    // are twice their former on-screen size, rather than doubling that magnification.
+    const formerTray = container.parentElement.querySelector('.dice-table');
+    return Number(container.dataset.visualScale) || 10 * formerTray.clientHeight / container.clientHeight;
+  }
   async function init(container) {
     if (box) return box;
     if (!initializing) initializing = (async () => {
@@ -21,7 +27,9 @@
         container: '#' + container.id, id: 'tor-dice-canvas',
         origin: base.origin, assetPath: new URL('assets/', base).pathname,
         theme: 'tor-hero', themeColor: '#efe0bf',
-        offscreen: false, scale: 5, settleTimeout: 6000,
+        offscreen: false, scale: visualScale(container), settleTimeout: 2500,
+        mass: 2, gravity: 1.5, friction: 0.95, restitution: 0.05,
+        angularDamping: 0.7, linearDamping: 0.6, spinForce: 3, throwForce: 4,
         enableShadows: true, lightIntensity: 1.2,
         suspendSimulation: false
       });
@@ -42,7 +50,7 @@
         return await deadline((async () => {
           const engine = await init(container);
           const enemy = actor === 'enemy';
-          await engine.updateConfig({theme: enemy ? 'tor-enemy' : 'tor-hero', themeColor: enemy ? '#23252b' : '#efe0bf'});
+          await engine.updateConfig({scale: visualScale(container), theme: enemy ? 'tor-enemy' : 'tor-hero', themeColor: enemy ? '#23252b' : '#efe0bf'});
           // The dialog can change the tray size between setup and rolling.
           window.dispatchEvent(new Event('resize'));
           const notation = [`${featCount}d12`];

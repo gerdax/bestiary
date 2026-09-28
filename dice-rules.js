@@ -54,7 +54,7 @@
     const marks = successDice.reduce((total, die) => total + die.successMarks, 0);
     const target = config.target === '' || config.target === null || config.target === undefined ? null : Number(config.target);
     if (target !== null && (!Number.isInteger(target) || target < 0)) throw new TypeError('PT musi być liczbą całkowitą od zera.');
-    const passed = target === null ? null : automaticFailure ? false : automaticSuccess ? true : sum >= target;
+    const passed = automaticSuccess ? true : target === null ? null : automaticFailure ? false : sum >= target;
 
     return {
       actor, mode, feat: raw.feat.slice(), featValues, selectedFeatIndex,
