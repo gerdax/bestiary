@@ -41,3 +41,13 @@ Generowanie losuje również układ scenerii: las bez drogi, ze ścieżką lub t
 Ruiny mają nieregularne układy: zabudowę wzdłuż traktu, otwarty plac lub długi mur z przerwami. Budowle różnią się kształtem, rozmiarem i orientacją; przejścia pozostają wolne od gruzu.
 
 Przycisk w prawym górnym rogu mapy rozwija ją na całe okno; ponowne kliknięcie lub Escape przywraca zwykły widok. Test: `node tests/map-fullscreen.cjs` (izolowany Playwright/Chrome, komputer i telefon).
+
+## Rzuty kośćmi
+
+Przycisk „Rzuć kośćmi” otwiera nakładkę nad dowolną zakładką (jest ukryty na mapie pełnoekranowej). Wybierz Bohatera lub Wroga, pulę, stan Kości Działania i ręczne modyfikatory. PT jest opcjonalny. „Przygotuj kolejny rzut” zachowuje ustawienia do zamknięcia strony. Wydanie Nadziei w rollerze nie zmienia arkusza.
+
+Moduł jest odseparowany: `dice-rules.js` zawiera czyste reguły, `dice-engine.js` adapter lokalnego Dice Box 1.1.4, a `dice-roller.js` i `dice-roller.css` nakładkę. `DiceRoller.open()` / `close()` umożliwiają otwieranie z przyszłych modułów. Wynik pochodzi z symulacji 3D, bez osobnego losowania. Symbole automatycznego sukcesu nie dodają liczby do sumy; ocena z PT uwzględnia je niezależnie od sumy. Oko Przygnębionego Bohatera powoduje porażkę, gdy jest wybraną Kością Działania.
+
+Biblioteka, WASM i oba motywy są lokalne i objęte pamięcią offline. Silnik wczytuje się przy pierwszym rzucie; wymaga WebGL. Przy błędzie wyświetla komunikat, bez zastępowania rzutu innym losowaniem. Premia/kara ma zakres −6…+6; maksymalna pula to 14 kości sukcesu i 2 kości działania.
+
+Test modułu w izolowanym Chrome: `node tests/dice-roller.cjs` (zmienne środowiska jak dla smoke testu). Atlas symboli można odtworzyć przez `node scripts/dice-textures.cjs` z dostępnym Playwright; nie jest to wymagane do uruchomienia aplikacji.
